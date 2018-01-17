@@ -15,7 +15,7 @@ alice.on('publish', (message) => {
 });
 
 bob.on('publish', (message) => {
-  setTimeout(() => bob.process(message), Math.round(Math.random() * 1000));
+  setTimeout(() => alice.process(message), Math.round(Math.random() * 1000));
 });
 
 alice.add('foo');
@@ -39,7 +39,7 @@ alice.on('publish', (message) => {
 });
 
 bob.on('publish', (message) => {
-  setTimeout(() => bob.process(message), Math.round(Math.random() * 1000));
+  setTimeout(() => alice.process(message), Math.round(Math.random() * 1000));
 });
 
 alice.set('a', 1);
