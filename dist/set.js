@@ -19,7 +19,7 @@ let idCounter = 0;
 class ObservedRemoveSet    extends EventEmitter {
                  
                            
-                             
+                           
                                
                          
                                           
@@ -122,7 +122,7 @@ class ObservedRemoveSet    extends EventEmitter {
     this.flush();
   }
 
-  add(value    ) {
+  add(value  ) {
     const normalizedDateString = Date.now().toString(36).padStart(9, '0');
     const idCounterString = idCounter.toString(36);
     const randomString = Math.round(Number.MAX_SAFE_INTEGER / 2 + Number.MAX_SAFE_INTEGER * Math.random() / 2).toString(36);
@@ -141,12 +141,11 @@ class ObservedRemoveSet    extends EventEmitter {
     }
   }
 
-  delete(value    ) {
+  delete(value  ) {
     const hash = this.hash(value);
     const insertions = this.insertions.getSources(hash);
     const hasValue = [...insertions].filter((id) => !this.deletions.has(id)).length > 0;
-    const ids = this.insertions.getSources(hash);
-    for (const id of ids) { // eslint-disable-line no-restricted-syntax
+    for (const id of insertions) { // eslint-disable-line no-restricted-syntax
       this.deletions.add(id);
       this.queue.push(id);
     }
@@ -157,7 +156,9 @@ class ObservedRemoveSet    extends EventEmitter {
   }
 
   clear() {
-    this.insertions.sources.forEach((id) => this.deletions.add(id));
+    for (const value of this) { // eslint-disable-line no-restricted-syntax
+      this.delete(value);
+    }
   }
 
   entries()                  {
@@ -189,7 +190,7 @@ class ObservedRemoveSet    extends EventEmitter {
     }
   }
 
-  has(value    ) {
+  has(value  ) {
     const hash = this.hash(value);
     const insertions = this.insertions.getSources(hash);
     return [...insertions].filter((id) => !this.deletions.has(id)).length > 0;
@@ -212,7 +213,7 @@ class ObservedRemoveSet    extends EventEmitter {
     return values[Symbol.iterator]();
   }
 
-  hash(value    ) {
+  hash(value  ) {
     const stringified = stringify(value);
     return murmurHash3.x64.hash128(stringified);
   }
@@ -230,4 +231,4 @@ class ObservedRemoveSet    extends EventEmitter {
   }
 }
 
-module.exports.ObservedRemoveSet = ObservedRemoveSet;
+module.exports = ObservedRemoveSet;

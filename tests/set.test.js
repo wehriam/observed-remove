@@ -1,26 +1,8 @@
 // @flow
 
 const expect = require('expect');
-const uuid = require('uuid');
 const { ObservedRemoveSet } = require('../src');
-
-const generateValue = (depth?:number = 0):any => {
-  if (Math.random() < 0.4) {
-    return 1000 * Math.random();
-  }
-  if (Math.random() < 0.4) {
-    return uuid.v4();
-  }
-  if (depth > 2) {
-    return { [uuid.v4()]: uuid.v4() };
-  }
-  const propertyCount = Math.round(Math.random() * 4);
-  const o = {};
-  for (let i = 0; i < propertyCount; i += 1) {
-    o[uuid.v4()] = generateValue(depth + 1);
-  }
-  return o;
-};
+const { generateValue } = require('./lib/values');
 
 test('Add and delete values', () => {
   const A = generateValue();
@@ -60,45 +42,33 @@ test('Emit add and delete events', async () => {
   const A = generateValue();
   const B = generateValue();
   const set = new ObservedRemoveSet();
-  const addAPromise = new Promise((resolve, reject) => {
+  const addAPromise = new Promise((resolve) => {
     set.once('add', (x) => {
-      if (x === A) {
-        resolve();
-      } else {
-        reject('Invalid value');
-      }
+      expect(x).toEqual(A);
+      resolve();
     });
     set.add(A);
   });
-  const addBPromise = new Promise((resolve, reject) => {
+  const addBPromise = new Promise((resolve) => {
     set.once('add', (x) => {
-      if (x === B) {
-        resolve();
-      } else {
-        reject('Invalid value');
-      }
+      expect(x).toEqual(B);
+      resolve();
     });
     set.add(B);
   });
   await addAPromise;
   await addBPromise;
-  const deleteAPromise = new Promise((resolve, reject) => {
+  const deleteAPromise = new Promise((resolve) => {
     set.once('delete', (x) => {
-      if (x === A) {
-        resolve();
-      } else {
-        reject('Invalid value');
-      }
+      expect(x).toEqual(A);
+      resolve();
     });
     set.delete(A);
   });
-  const deleteBPromise = new Promise((resolve, reject) => {
+  const deleteBPromise = new Promise((resolve) => {
     set.once('delete', (x) => {
-      if (x === B) {
-        resolve();
-      } else {
-        reject('Invalid value');
-      }
+      expect(x).toEqual(B);
+      resolve();
     });
     set.delete(B);
   });
@@ -239,5 +209,58 @@ test('Synchronize mixed sets using sync', async () => {
   }
   expect([...alice]).toEqual([A, X, B, Y, C, Z]);
   expect([...bob]).toEqual([A, X, B, Y, C, Z]);
+});
+
+test('Synchronizes 100 asynchrous sets', async () => {
+  const A = generateValue();
+  const B = generateValue();
+  const C = generateValue();
+  const sets = [];
+  const callbacks = [];
+  const publish = (message:Buffer) => {
+    for (let i = 0; i < callbacks.length; i += 1) {
+      setTimeout(() => callbacks[i](message), Math.round(1000 * Math.random()));
+    }
+  };
+  const subscribe = (callback:Function) => {
+    callbacks.push(callback);
+  };
+  const getPair = () => {
+    const setA = sets[Math.floor(Math.random() * sets.length)];
+    let setB = setA;
+    while (setB === setA) {
+      setB = sets[Math.floor(Math.random() * sets.length)];
+    }
+    return [setA, setB];
+  };
+  for (let i = 0; i < 100; i += 1) {
+    const set = new ObservedRemoveSet();
+    set.on('publish', publish);
+    subscribe((message) => set.process(message));
+    sets.push(set);
+  }
+  const [alice, bob] = getPair();
+  let aliceAddCount = 0;
+  let bobAddCount = 0;
+  let aliceDeleteCount = 0;
+  let bobDeleteCount = 0;
+  alice.on('add', () => (aliceAddCount += 1));
+  bob.on('add', () => (bobAddCount += 1));
+  alice.on('delete', () => (aliceDeleteCount += 1));
+  bob.on('delete', () => (bobDeleteCount += 1));
+  alice.add(A);
+  bob.add(B);
+  alice.add(C);
+  while (aliceAddCount !== 3 || bobAddCount !== 3) {
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  bob.delete(C);
+  alice.delete(B);
+  bob.delete(A);
+  while (aliceDeleteCount !== 3 || bobDeleteCount !== 3) {
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  expect([...alice]).toEqual([]);
+  expect([...bob]).toEqual([]);
 });
 
