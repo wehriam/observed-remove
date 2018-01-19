@@ -77,15 +77,20 @@ class ObservedRemoveSet<T> extends EventEmitter {
     }
   }
 
-  sync() {
-    this.queue = this.queue.concat([...this.deletions]);
+  dump() {
+    const queue = [...this.deletions];
     for (const [id, hash] of this.insertions.edges) { // eslint-disable-line no-restricted-syntax
       const value = this.valueMap.get(hash);
       const stringified = stringify(value);
       if (typeof value !== 'undefined') {
-        this.queue.push([id, stringified]);
+        queue.push([id, stringified]);
       }
     }
+    return queue;
+  }
+
+  sync() {
+    this.queue = this.queue.concat(this.dump());
     if (this.publishTimeout) {
       clearTimeout(this.publishTimeout);
     }
@@ -126,7 +131,7 @@ class ObservedRemoveSet<T> extends EventEmitter {
     const normalizedDateString = Date.now().toString(36).padStart(9, '0');
     const idCounterString = idCounter.toString(36);
     const randomString = Math.round(Number.MAX_SAFE_INTEGER / 2 + Number.MAX_SAFE_INTEGER * Math.random() / 2).toString(36);
-    const id = (`${normalizedDateString}${idCounterString}${randomString}`).slice(0, 20);
+    const id = (`${normalizedDateString}${idCounterString}${randomString}`).slice(0, 16);
     idCounter += 1;
     const stringified = stringify(value);
     const hash = murmurHash3.x64.hash128(stringified);

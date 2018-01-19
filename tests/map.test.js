@@ -314,5 +314,3 @@ test('Synchronizes 100 asynchrous maps', async () => {
   expect([...bob]).toEqual([]);
 });
 
-
-

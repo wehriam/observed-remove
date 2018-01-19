@@ -67,7 +67,6 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
     this.emit('publish', await gzip(JSON.stringify(queue)));
   }
 
-
   flush() {
     const now = Date.now();
     for (const id of this.deletions) { // eslint-disable-line no-restricted-syntax
@@ -79,15 +78,19 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
     }
   }
 
-
-  sync() {
-    this.queue = this.queue.concat([...this.deletions]);
+  dump() {
+    const queue = [...this.deletions];
     for (const [id, key] of this.insertions.edges) { // eslint-disable-line no-restricted-syntax
       const value = this.valueMap.get(id);
       if (typeof value !== 'undefined') {
-        this.queue.push([id, JSON.stringify([key, value])]);
+        queue.push([id, JSON.stringify([key, value])]);
       }
     }
+    return queue;
+  }
+
+  sync() {
+    this.queue = this.queue.concat(this.dump());
     if (this.publishTimeout) {
       clearTimeout(this.publishTimeout);
     }
@@ -132,7 +135,7 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
     const normalizedDateString = Date.now().toString(36).padStart(9, '0');
     const idCounterString = idCounter.toString(36);
     const randomString = Math.round(Number.MAX_SAFE_INTEGER / 2 + Number.MAX_SAFE_INTEGER * Math.random() / 2).toString(36);
-    const id = (`${normalizedDateString}${idCounterString}${randomString}`).slice(0, 20);
+    const id = (`${normalizedDateString}${idCounterString}${randomString}`).slice(0, 16);
     idCounter += 1;
     this.valueMap.set(id, value);
     this.insertions.addEdge(id, key);
@@ -180,7 +183,7 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
   }
 
   clear() {
-    for (const [key] of this.entries()) { // eslint-disable-line no-restricted-syntax
+    for (const key of this.keys()) { // eslint-disable-line no-restricted-syntax
       this.delete(key);
     }
   }
@@ -219,7 +222,7 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
     return [...insertions].filter((id) => !this.deletions.has(id)).length > 0;
   }
 
-  keys():Iterable<V> {
+  keys():Iterable<K> {
     const insertions = this.insertions.sources;
     const ids = [...insertions].filter((id) => !this.deletions.has(id));
     ids.sort();
