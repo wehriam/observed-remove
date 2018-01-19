@@ -4,7 +4,6 @@ const { EventEmitter } = require('events');
 const DirectedGraphMap = require('directed-graph-map');
 const stringify = require('json-stringify-deterministic');
 const murmurHash3 = require('murmur-hash').v3;
-const { gzip, gunzip } = require('./lib/gzip');
 
 type Options = {
   maxAge?:number,
@@ -12,6 +11,8 @@ type Options = {
 };
 
 let idCounter = 0;
+
+type QueueType = Array<Array<any>>;
 
 /**
  * Class representing a Observed Remove Set
@@ -22,7 +23,7 @@ class ObservedRemoveSet<T> extends EventEmitter {
   valueMap: Map<string, T>;
   insertions: DirectedGraphMap;
   deletions: Set<string>;
-  queue: Array<string | [string, string]>;
+  queue: QueueType;
   publishTimeout: null | number;
 
   constructor(entries?: Iterable<T>, options?:Options = {}) {
@@ -63,7 +64,7 @@ class ObservedRemoveSet<T> extends EventEmitter {
     this.publishTimeout = null;
     const queue = this.queue;
     this.queue = [];
-    this.emit('publish', await gzip(JSON.stringify(queue)));
+    this.emit('publish', queue);
   }
 
   flush() {
@@ -78,12 +79,11 @@ class ObservedRemoveSet<T> extends EventEmitter {
   }
 
   dump() {
-    const queue = [...this.deletions];
+    const queue = [...this.deletions].map((id) => [id]);
     for (const [id, hash] of this.insertions.edges) { // eslint-disable-line no-restricted-syntax
       const value = this.valueMap.get(hash);
-      const stringified = stringify(value);
       if (typeof value !== 'undefined') {
-        queue.push([id, stringified]);
+        queue.push([id, value]);
       }
     }
     return queue;
@@ -97,30 +97,26 @@ class ObservedRemoveSet<T> extends EventEmitter {
     this.publish();
   }
 
-  async process(buffer:Buffer) {
-    const queue = JSON.parse(await gunzip(buffer));
-    for (const x of queue) { // eslint-disable-line no-restricted-syntax
-      if (typeof x === 'string') {
-        const id:string = x;
-        const hashes = this.insertions.getTargets(id);
-        for (const hash of hashes) { // eslint-disable-line no-restricted-syntax
-          const value = this.valueMap.get(hash);
-          const hasValue = typeof value !== 'undefined' && !this.deletions.has(id);
-          this.deletions.add(id);
-          if (hasValue) {
-            this.emit('delete', value);
-          }
-        }
-      } else if (x instanceof Array) {
-        const [id:string, stringified:string] = x;
-        const value = JSON.parse(stringified);
-        const hash = murmurHash3.x64.hash128(stringified);
+  async process(queue: QueueType) {
+    for (const [id:string, value:any] of queue) { // eslint-disable-line no-restricted-syntax
+      if (value && id) {
+        const hash = this.hash(value);
         const insertions = this.insertions.getSources(hash);
         const hasValue = [...insertions].filter((id2) => !this.deletions.has(id2)).length > 0;
         this.valueMap.set(hash, value);
         this.insertions.addEdge(id, hash);
         if (!hasValue) {
           this.emit('add', value);
+        }
+      } else if (id) {
+        const hashes = this.insertions.getTargets(id);
+        for (const hash of hashes) { // eslint-disable-line no-restricted-syntax
+          const localValue = this.valueMap.get(hash);
+          const hasValue = typeof localValue !== 'undefined' && !this.deletions.has(id);
+          this.deletions.add(id);
+          if (hasValue) {
+            this.emit('delete', value);
+          }
         }
       }
     }
@@ -133,13 +129,12 @@ class ObservedRemoveSet<T> extends EventEmitter {
     const randomString = Math.round(Number.MAX_SAFE_INTEGER / 2 + Number.MAX_SAFE_INTEGER * Math.random() / 2).toString(36);
     const id = (`${normalizedDateString}${idCounterString}${randomString}`).slice(0, 16);
     idCounter += 1;
-    const stringified = stringify(value);
-    const hash = murmurHash3.x64.hash128(stringified);
+    const hash = this.hash(value);
     const insertions = this.insertions.getSources(hash);
     const hasValue = [...insertions].filter((id2) => !this.deletions.has(id2)).length > 0;
     this.valueMap.set(hash, value);
     this.insertions.addEdge(id, hash);
-    this.queue.push([id, stringified]);
+    this.queue.push([id, value]);
     this.dequeue();
     if (!hasValue) {
       this.emit('add', value);
@@ -152,7 +147,7 @@ class ObservedRemoveSet<T> extends EventEmitter {
     const hasValue = [...insertions].filter((id) => !this.deletions.has(id)).length > 0;
     for (const id of insertions) { // eslint-disable-line no-restricted-syntax
       this.deletions.add(id);
-      this.queue.push(id);
+      this.queue.push([id]);
     }
     this.dequeue();
     if (hasValue) {

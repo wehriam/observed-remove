@@ -203,7 +203,7 @@ test('Flush values', async () => {
   map.flush();
   expect(map.deletions.size).toEqual(3);
   expect(map.insertions.size).toEqual(3);
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 200));
   map.flush();
   expect(map.deletions.size).toEqual(0);
   expect(map.insertions.size).toEqual(0);

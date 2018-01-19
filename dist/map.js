@@ -3,13 +3,13 @@
 const { EventEmitter } = require('events');
 const DirectedGraphMap = require('directed-graph-map');
 const stringify = require('json-stringify-deterministic');
-// const murmurHash3 = require('murmur-hash').v3;
-const { gzip, gunzip } = require('./lib/gzip');
 
                 
                  
                           
   
+
+                                   
 
 let idCounter = 0;
 
@@ -23,7 +23,7 @@ class ObservedRemoveMap       extends EventEmitter {
                          
                                
                          
-                                          
+                   
                                 
 
   constructor(entries                   , options          = {}) {
@@ -64,9 +64,8 @@ class ObservedRemoveMap       extends EventEmitter {
     this.publishTimeout = null;
     const queue = this.queue;
     this.queue = [];
-    this.emit('publish', await gzip(JSON.stringify(queue)));
+    this.emit('publish', queue);
   }
-
 
   flush() {
     const now = Date.now();
@@ -79,48 +78,48 @@ class ObservedRemoveMap       extends EventEmitter {
     }
   }
 
-
-  sync() {
-    this.queue = this.queue.concat([...this.deletions]);
+  dump() {
+    const queue = [...this.deletions].map((id) => [id]);
     for (const [id, key] of this.insertions.edges) { // eslint-disable-line no-restricted-syntax
       const value = this.valueMap.get(id);
       if (typeof value !== 'undefined') {
-        this.queue.push([id, JSON.stringify([key, value])]);
+        queue.push([id, [key, value]]);
       }
     }
+    return queue;
+  }
+
+  sync() {
+    this.queue = this.queue.concat(this.dump());
     if (this.publishTimeout) {
       clearTimeout(this.publishTimeout);
     }
     this.publish();
   }
 
-
-  async process(buffer       ) {
-    const queue = JSON.parse(await gunzip(buffer));
-    for (const x of queue) { // eslint-disable-line no-restricted-syntax
-      if (typeof x === 'string') {
-        const id        = x;
-        const keys = this.insertions.getTargets(id);
-        for (const key of keys) { // eslint-disable-line no-restricted-syntax
-          const activeId = this.activeId(key);
-          this.deletions.add(id);
-          const newActiveId = this.activeId(key);
-          if (activeId && !newActiveId) {
-            const value = this.valueMap.get(activeId);
-            if (value) {
-              this.emit('delete', key, value);
-            }
-          }
-        }
-      } else if (x instanceof Array) {
-        const [id       , stringified       ] = x;
-        const [key, value] = JSON.parse(stringified);
+  async process(queue           ) {
+    for (const [id       , tuple               ] of queue) { // eslint-disable-line no-restricted-syntax
+      if (tuple && id) {
+        const [key, value] = tuple;
         const activeValue = this.get(key);
         this.valueMap.set(id, value);
         this.insertions.addEdge(id, key);
         const newValue = this.get(key);
         if (!activeValue || (newValue && stringify(activeValue) !== stringify(newValue))) {
           this.emit('set', newValue);
+        }
+      } else if (id) {
+        const keys = this.insertions.getTargets(id);
+        for (const k of keys) { // eslint-disable-line no-restricted-syntax
+          const activeId = this.activeId(k);
+          this.deletions.add(id);
+          const newActiveId = this.activeId(k);
+          if (activeId && !newActiveId) {
+            const activeValue = this.valueMap.get(activeId);
+            if (activeValue) {
+              this.emit('delete', k, activeValue);
+            }
+          }
         }
       }
     }
@@ -132,11 +131,11 @@ class ObservedRemoveMap       extends EventEmitter {
     const normalizedDateString = Date.now().toString(36).padStart(9, '0');
     const idCounterString = idCounter.toString(36);
     const randomString = Math.round(Number.MAX_SAFE_INTEGER / 2 + Number.MAX_SAFE_INTEGER * Math.random() / 2).toString(36);
-    const id = (`${normalizedDateString}${idCounterString}${randomString}`).slice(0, 20);
+    const id = (`${normalizedDateString}${idCounterString}${randomString}`).slice(0, 16);
     idCounter += 1;
     this.valueMap.set(id, value);
     this.insertions.addEdge(id, key);
-    this.queue.push([id, JSON.stringify([key, value])]);
+    this.queue.push([id, [key, value]]);
     this.dequeue();
     if (!activeValue || (activeValue && stringify(activeValue) !== stringify(value))) {
       this.emit('set', key, value);
@@ -164,7 +163,7 @@ class ObservedRemoveMap       extends EventEmitter {
     }
     for (const id of insertions) { // eslint-disable-line no-restricted-syntax
       this.deletions.add(id);
-      this.queue.push(id);
+      this.queue.push([id]);
     }
     this.dequeue();
     if (value) {
@@ -180,7 +179,7 @@ class ObservedRemoveMap       extends EventEmitter {
   }
 
   clear() {
-    for (const [key] of this.entries()) { // eslint-disable-line no-restricted-syntax
+    for (const key of this.keys()) { // eslint-disable-line no-restricted-syntax
       this.delete(key);
     }
   }

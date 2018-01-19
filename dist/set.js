@@ -4,7 +4,6 @@ const { EventEmitter } = require('events');
 const DirectedGraphMap = require('directed-graph-map');
 const stringify = require('json-stringify-deterministic');
 const murmurHash3 = require('murmur-hash').v3;
-const { gzip, gunzip } = require('./lib/gzip');
 
                 
                  
@@ -12,6 +11,8 @@ const { gzip, gunzip } = require('./lib/gzip');
   
 
 let idCounter = 0;
+
+                                   
 
 /**
  * Class representing a Observed Remove Set
@@ -22,7 +23,7 @@ class ObservedRemoveSet    extends EventEmitter {
                            
                                
                          
-                                          
+                   
                                 
 
   constructor(entries              , options          = {}) {
@@ -63,7 +64,7 @@ class ObservedRemoveSet    extends EventEmitter {
     this.publishTimeout = null;
     const queue = this.queue;
     this.queue = [];
-    this.emit('publish', await gzip(JSON.stringify(queue)));
+    this.emit('publish', queue);
   }
 
   flush() {
@@ -77,45 +78,45 @@ class ObservedRemoveSet    extends EventEmitter {
     }
   }
 
-  sync() {
-    this.queue = this.queue.concat([...this.deletions]);
+  dump() {
+    const queue = [...this.deletions].map((id) => [id]);
     for (const [id, hash] of this.insertions.edges) { // eslint-disable-line no-restricted-syntax
       const value = this.valueMap.get(hash);
-      const stringified = stringify(value);
       if (typeof value !== 'undefined') {
-        this.queue.push([id, stringified]);
+        queue.push([id, value]);
       }
     }
+    return queue;
+  }
+
+  sync() {
+    this.queue = this.queue.concat(this.dump());
     if (this.publishTimeout) {
       clearTimeout(this.publishTimeout);
     }
     this.publish();
   }
 
-  async process(buffer       ) {
-    const queue = JSON.parse(await gunzip(buffer));
-    for (const x of queue) { // eslint-disable-line no-restricted-syntax
-      if (typeof x === 'string') {
-        const id        = x;
-        const hashes = this.insertions.getTargets(id);
-        for (const hash of hashes) { // eslint-disable-line no-restricted-syntax
-          const value = this.valueMap.get(hash);
-          const hasValue = typeof value !== 'undefined' && !this.deletions.has(id);
-          this.deletions.add(id);
-          if (hasValue) {
-            this.emit('delete', value);
-          }
-        }
-      } else if (x instanceof Array) {
-        const [id       , stringified       ] = x;
-        const value = JSON.parse(stringified);
-        const hash = murmurHash3.x64.hash128(stringified);
+  async process(queue           ) {
+    for (const [id       , value    ] of queue) { // eslint-disable-line no-restricted-syntax
+      if (value && id) {
+        const hash = this.hash(value);
         const insertions = this.insertions.getSources(hash);
         const hasValue = [...insertions].filter((id2) => !this.deletions.has(id2)).length > 0;
         this.valueMap.set(hash, value);
         this.insertions.addEdge(id, hash);
         if (!hasValue) {
           this.emit('add', value);
+        }
+      } else if (id) {
+        const hashes = this.insertions.getTargets(id);
+        for (const hash of hashes) { // eslint-disable-line no-restricted-syntax
+          const localValue = this.valueMap.get(hash);
+          const hasValue = typeof localValue !== 'undefined' && !this.deletions.has(id);
+          this.deletions.add(id);
+          if (hasValue) {
+            this.emit('delete', value);
+          }
         }
       }
     }
@@ -126,15 +127,14 @@ class ObservedRemoveSet    extends EventEmitter {
     const normalizedDateString = Date.now().toString(36).padStart(9, '0');
     const idCounterString = idCounter.toString(36);
     const randomString = Math.round(Number.MAX_SAFE_INTEGER / 2 + Number.MAX_SAFE_INTEGER * Math.random() / 2).toString(36);
-    const id = (`${normalizedDateString}${idCounterString}${randomString}`).slice(0, 20);
+    const id = (`${normalizedDateString}${idCounterString}${randomString}`).slice(0, 16);
     idCounter += 1;
-    const stringified = stringify(value);
-    const hash = murmurHash3.x64.hash128(stringified);
+    const hash = this.hash(value);
     const insertions = this.insertions.getSources(hash);
     const hasValue = [...insertions].filter((id2) => !this.deletions.has(id2)).length > 0;
     this.valueMap.set(hash, value);
     this.insertions.addEdge(id, hash);
-    this.queue.push([id, stringified]);
+    this.queue.push([id, value]);
     this.dequeue();
     if (!hasValue) {
       this.emit('add', value);
@@ -147,7 +147,7 @@ class ObservedRemoveSet    extends EventEmitter {
     const hasValue = [...insertions].filter((id) => !this.deletions.has(id)).length > 0;
     for (const id of insertions) { // eslint-disable-line no-restricted-syntax
       this.deletions.add(id);
-      this.queue.push(id);
+      this.queue.push([id]);
     }
     this.dequeue();
     if (hasValue) {

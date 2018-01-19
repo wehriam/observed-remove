@@ -54,3 +54,5 @@ bob.get('a'); // 1
 ## Install
 
 `yarn add observed-remove`
+
+

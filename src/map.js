@@ -3,13 +3,13 @@
 const { EventEmitter } = require('events');
 const DirectedGraphMap = require('directed-graph-map');
 const stringify = require('json-stringify-deterministic');
-// const murmurHash3 = require('murmur-hash').v3;
-const { gzip, gunzip } = require('./lib/gzip');
 
 type Options = {
   maxAge?:number,
   bufferPublishing?:number
 };
+
+type QueueType = Array<Array<any>>;
 
 let idCounter = 0;
 
@@ -23,7 +23,7 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
   keyMap: Map<K, string>;
   insertions: DirectedGraphMap;
   deletions: Set<string>;
-  queue: Array<string | [string, string]>;
+  queue: QueueType;
   publishTimeout: null | number;
 
   constructor(entries?: Iterable<[K, V]>, options?:Options = {}) {
@@ -64,7 +64,7 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
     this.publishTimeout = null;
     const queue = this.queue;
     this.queue = [];
-    this.emit('publish', await gzip(JSON.stringify(queue)));
+    this.emit('publish', queue);
   }
 
   flush() {
@@ -79,11 +79,11 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
   }
 
   dump() {
-    const queue = [...this.deletions];
+    const queue = [...this.deletions].map((id) => [id]);
     for (const [id, key] of this.insertions.edges) { // eslint-disable-line no-restricted-syntax
       const value = this.valueMap.get(id);
       if (typeof value !== 'undefined') {
-        queue.push([id, JSON.stringify([key, value])]);
+        queue.push([id, [key, value]]);
       }
     }
     return queue;
@@ -97,33 +97,29 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
     this.publish();
   }
 
-
-  async process(buffer:Buffer) {
-    const queue = JSON.parse(await gunzip(buffer));
-    for (const x of queue) { // eslint-disable-line no-restricted-syntax
-      if (typeof x === 'string') {
-        const id:string = x;
-        const keys = this.insertions.getTargets(id);
-        for (const key of keys) { // eslint-disable-line no-restricted-syntax
-          const activeId = this.activeId(key);
-          this.deletions.add(id);
-          const newActiveId = this.activeId(key);
-          if (activeId && !newActiveId) {
-            const value = this.valueMap.get(activeId);
-            if (value) {
-              this.emit('delete', key, value);
-            }
-          }
-        }
-      } else if (x instanceof Array) {
-        const [id:string, stringified:string] = x;
-        const [key, value] = JSON.parse(stringified);
+  async process(queue: QueueType) {
+    for (const [id:string, tuple?:[string, any]] of queue) { // eslint-disable-line no-restricted-syntax
+      if (tuple && id) {
+        const [key, value] = tuple;
         const activeValue = this.get(key);
         this.valueMap.set(id, value);
         this.insertions.addEdge(id, key);
         const newValue = this.get(key);
         if (!activeValue || (newValue && stringify(activeValue) !== stringify(newValue))) {
           this.emit('set', newValue);
+        }
+      } else if (id) {
+        const keys = this.insertions.getTargets(id);
+        for (const k of keys) { // eslint-disable-line no-restricted-syntax
+          const activeId = this.activeId(k);
+          this.deletions.add(id);
+          const newActiveId = this.activeId(k);
+          if (activeId && !newActiveId) {
+            const activeValue = this.valueMap.get(activeId);
+            if (activeValue) {
+              this.emit('delete', k, activeValue);
+            }
+          }
         }
       }
     }
@@ -139,7 +135,7 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
     idCounter += 1;
     this.valueMap.set(id, value);
     this.insertions.addEdge(id, key);
-    this.queue.push([id, JSON.stringify([key, value])]);
+    this.queue.push([id, [key, value]]);
     this.dequeue();
     if (!activeValue || (activeValue && stringify(activeValue) !== stringify(value))) {
       this.emit('set', key, value);
@@ -167,7 +163,7 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
     }
     for (const id of insertions) { // eslint-disable-line no-restricted-syntax
       this.deletions.add(id);
-      this.queue.push(id);
+      this.queue.push([id]);
     }
     this.dequeue();
     if (value) {
