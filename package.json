@@ -23,9 +23,9 @@
     ]
   },
   "pre-commit": [
-    "lint:staged",
-    "build"
-    "documentation"
+    "build",
+    "documentation",
+    "lint:staged"
   ],
   "jest": {
     "coverageDirectory": "./coverage/",
