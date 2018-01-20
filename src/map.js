@@ -16,7 +16,8 @@ let idCounter = 0;
 /**
  * Class representing a Observed Remove Map
  *
- * Implements [all methods and iterators of the native `Map` object]{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map} in addition to the following.
+ * Implements all methods and iterators of the native `Map` object in addition to the following.
+ * See: {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map}
  */
 class ObservedRemoveMap<K, V> extends EventEmitter {
   maxAge: number;
