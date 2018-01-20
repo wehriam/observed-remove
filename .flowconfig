@@ -1,5 +1,7 @@
 [ignore]
 
+.*/node_modules/documentation/*
+
 [include]
 
 [libs]
@@ -7,5 +9,3 @@
 flow/
 
 [options]
-
-unsafe.enable_getters_and_setters=true

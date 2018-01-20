@@ -27,7 +27,7 @@ class ObservedRemoveMap       extends EventEmitter {
                                
                          
                    
-                                
+                                   
 
   /**
    * Create a observed-remove map.

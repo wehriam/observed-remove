@@ -27,7 +27,7 @@ class ObservedRemoveSet    extends EventEmitter {
                                
                          
                    
-                                
+                                   
                       
 
   /**

@@ -27,7 +27,7 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
   insertions: DirectedGraphMap;
   deletions: Set<string>;
   queue: QueueType;
-  publishTimeout: null | number;
+  publishTimeout: null | TimeoutID;
 
   /**
    * Create a observed-remove map.

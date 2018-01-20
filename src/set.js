@@ -27,7 +27,7 @@ class ObservedRemoveSet<T> extends EventEmitter {
   insertions: DirectedGraphMap;
   deletions: Set<string>;
   queue: QueueType;
-  publishTimeout: null | number;
+  publishTimeout: null | TimeoutID;
   processing: boolean;
 
   /**
