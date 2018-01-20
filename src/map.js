@@ -30,7 +30,7 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
   publishTimeout: null | TimeoutID;
 
   /**
-   * Create a observed-remove map.
+   * Create an observed-remove map.
    * @param {Iterable<K, V>} entries Iterable of initial values
    * @param {Object} options
    * @param {String} [options.maxAge=5000] Max age of insertion/deletion identifiers

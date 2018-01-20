@@ -31,7 +31,7 @@ class ObservedRemoveSet    extends EventEmitter {
                       
 
   /**
-   * Create a observed-remove set.
+   * Create an observed-remove set.
    * @param {Iterable<T>} entries Iterable of initial values
    * @param {Object} options
    * @param {String} [options.maxAge=5000] Max age of insertion/deletion identifiers
