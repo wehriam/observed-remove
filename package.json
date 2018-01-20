@@ -15,7 +15,7 @@
     "lint:js": "./node_modules/.bin/eslint -c ./.eslintrc --no-eslintrc --fix .",
     "lint:flow": "./node_modules/.bin/flow --show-all-errors",
     "coverage": "codecov",
-    "jsdoc": "jsdoc2md dist/index.js"
+    "documentation": "documentation build src/set.js -f md"
   },
   "lint-staged": {
     "*.js": [
@@ -41,7 +41,7 @@
     "codecov": "^3.0.0",
     "cross-env": "^5.1.1",
     "eslint": "^4.12.1",
-    "eslint-config-bunchtogether": "^1.1.2",
+    "eslint-config-bunchtogether": "^1.1.4",
     "eslint-plugin-flowtype": "^2.39.1",
     "eslint-plugin-flowtype-errors": "^3.3.6",
     "eslint-plugin-import": "^2.8.0",
@@ -62,6 +62,7 @@
   },
   "dependencies": {
     "directed-graph-map": "^1.1.0",
+    "documentation": "^5.3.5",
     "json-stringify-deterministic": "^1.0.1",
     "murmur-hash": "^1.0.0"
   }

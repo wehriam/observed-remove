@@ -82,7 +82,7 @@ test('Iterate through values', () => {
   const C = generateValue();
   const set = new ObservedRemoveSet([A, B, C]);
   let i = 0;
-  for (const x of set) { // eslint-disable-line no-restricted-syntax
+  for (const x of set) {
     if (i === 0) {
       expect(x).toEqual(A);
     } else if (i === 1) {
@@ -170,6 +170,95 @@ test('Flush values', async () => {
   expect(set.insertions.size).toEqual(0);
 });
 
+test('Synchronize add and delete events', async () => {
+  const X = generateValue();
+  const Y = generateValue();
+  const alice = new ObservedRemoveSet();
+  const bob = new ObservedRemoveSet();
+  alice.on('publish', (message) => {
+    bob.process(message);
+  });
+  bob.on('publish', (message) => {
+    alice.process(message);
+  });
+  const aliceAddXPromise = new Promise((resolve) => {
+    alice.once('add', (value) => {
+      expect(value).toEqual(X);
+      resolve();
+    });
+  });
+  const aliceDeleteXPromise = new Promise((resolve) => {
+    alice.once('delete', (value) => {
+      expect(value).toEqual(X);
+      resolve();
+    });
+  });
+  bob.add(X);
+  await aliceAddXPromise;
+  bob.delete(X);
+  await aliceDeleteXPromise;
+  const bobAddYPromise = new Promise((resolve) => {
+    bob.once('add', (value) => {
+      expect(value).toEqual(Y);
+      resolve();
+    });
+  });
+  const bobDeleteYPromise = new Promise((resolve) => {
+    bob.once('delete', (value) => {
+      expect(value).toEqual(Y);
+      resolve();
+    });
+  });
+  alice.add(Y);
+  await bobAddYPromise;
+  alice.delete(Y);
+  await bobDeleteYPromise;
+});
+
+test('Should not emit events for remote set/delete combos on sync', async () => {
+  const X = generateValue();
+  const Y = generateValue();
+  const alice = new ObservedRemoveSet();
+  const bob = new ObservedRemoveSet();
+  alice.add(X);
+  alice.delete(X);
+  bob.add(Y);
+  bob.delete(Y);
+  await new Promise((resolve) => setTimeout(resolve, 250));
+  const bobPromise = new Promise((resolve, reject) => {
+    bob.once('add', () => {
+      reject(new Error('Bob should not receive add event'));
+    });
+    bob.once('delete', () => {
+      reject(new Error('Bob should not receive delete event'));
+    });
+    setTimeout(resolve, 500);
+  });
+  const alicePromise = new Promise((resolve, reject) => {
+    alice.once('add', () => {
+      reject(new Error('Alice should not receive add event'));
+    });
+    alice.once('delete', () => {
+      reject(new Error('Alice should not receive delete event'));
+    });
+    setTimeout(resolve, 500);
+  });
+  alice.on('publish', (message) => {
+    bob.process(message);
+  });
+  bob.on('publish', (message) => {
+    alice.process(message);
+  });
+  alice.sync();
+  bob.sync();
+  await bobPromise;
+  await alicePromise;
+  expect(alice.has(X)).toEqual(false);
+  expect(alice.has(Y)).toEqual(false);
+  expect(bob.has(X)).toEqual(false);
+  expect(bob.has(Y)).toEqual(false);
+});
+
 test('Synchronize mixed sets using sync', async () => {
   const A = generateValue();
   const B = generateValue();
@@ -217,13 +306,17 @@ test('Synchronizes 100 asynchrous sets', async () => {
   const C = generateValue();
   const sets = [];
   const callbacks = [];
-  const publish = (message:Buffer) => {
+  const publish = (sourceId:number, message:Buffer) => {
     for (let i = 0; i < callbacks.length; i += 1) {
-      setTimeout(() => callbacks[i](message), Math.round(1000 * Math.random()));
+      const [targetId, callback] = callbacks[i];
+      if (targetId === sourceId) {
+        continue;
+      }
+      setTimeout(() => callback(message), Math.round(1000 * Math.random()));
     }
   };
-  const subscribe = (callback:Function) => {
-    callbacks.push(callback);
+  const subscribe = (targetId: number, callback:Function) => {
+    callbacks.push([targetId, callback]);
   };
   const getPair = () => {
     const setA = sets[Math.floor(Math.random() * sets.length)];
@@ -235,8 +328,8 @@ test('Synchronizes 100 asynchrous sets', async () => {
   };
   for (let i = 0; i < 100; i += 1) {
     const set = new ObservedRemoveSet();
-    set.on('publish', publish);
-    subscribe((message) => set.process(message));
+    set.on('publish', (message) => publish(i, message));
+    subscribe(i, (message) => set.process(message));
     sets.push(set);
   }
   const [alice, bob] = getPair();
@@ -249,16 +342,16 @@ test('Synchronizes 100 asynchrous sets', async () => {
   alice.on('delete', () => (aliceDeleteCount += 1));
   bob.on('delete', () => (bobDeleteCount += 1));
   alice.add(A);
-  bob.add(B);
+  alice.add(B);
   alice.add(C);
   while (aliceAddCount !== 3 || bobAddCount !== 3) {
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
   bob.delete(C);
-  alice.delete(B);
+  bob.delete(B);
   bob.delete(A);
   while (aliceDeleteCount !== 3 || bobDeleteCount !== 3) {
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
   expect([...alice]).toEqual([]);
   expect([...bob]).toEqual([]);

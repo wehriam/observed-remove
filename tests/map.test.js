@@ -161,7 +161,7 @@ test('Synchronize maps', async () => {
   alice.set(keyY, valueY);
   alice.set(keyZ, valueZ);
   while (aliceAddCount !== 3 || bobAddCount !== 3) {
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
   expect(alice.get(keyX)).toEqual(valueX);
   expect(alice.get(keyY)).toEqual(valueY);
@@ -209,6 +209,102 @@ test('Flush values', async () => {
   expect(map.insertions.size).toEqual(0);
 });
 
+test('Synchronize set and delete events', async () => {
+  const keyX = uuid.v4();
+  const keyY = uuid.v4();
+  const valueX = generateValue();
+  const valueY = generateValue();
+  const alice = new ObservedRemoveMap();
+  const bob = new ObservedRemoveMap();
+  alice.on('publish', (message) => {
+    bob.process(message);
+  });
+  bob.on('publish', (message) => {
+    alice.process(message);
+  });
+  const aliceSetXPromise = new Promise((resolve) => {
+    alice.once('set', (key, value) => {
+      expect(key).toEqual(keyX);
+      expect(value).toEqual(valueX);
+      resolve();
+    });
+  });
+  const aliceDeleteXPromise = new Promise((resolve) => {
+    alice.once('delete', (key, value) => {
+      expect(key).toEqual(keyX);
+      expect(value).toEqual(valueX);
+      resolve();
+    });
+  });
+  bob.set(keyX, valueX);
+  await aliceSetXPromise;
+  bob.delete(keyX);
+  await aliceDeleteXPromise;
+  const bobSetYPromise = new Promise((resolve) => {
+    bob.once('set', (key, value) => {
+      expect(key).toEqual(keyY);
+      expect(value).toEqual(valueY);
+      resolve();
+    });
+  });
+  const bobDeleteYPromise = new Promise((resolve) => {
+    bob.once('delete', (key, value) => {
+      expect(key).toEqual(keyY);
+      expect(value).toEqual(valueY);
+      resolve();
+    });
+  });
+  alice.set(keyY, valueY);
+  await bobSetYPromise;
+  alice.delete(keyY);
+  await bobDeleteYPromise;
+});
+
+test('Should not emit events for remote set/delete combos on sync', async () => {
+  const keyX = uuid.v4();
+  const keyY = uuid.v4();
+  const valueX = generateValue();
+  const valueY = generateValue();
+  const alice = new ObservedRemoveMap();
+  const bob = new ObservedRemoveMap();
+  alice.set(keyX, valueX);
+  alice.delete(keyX);
+  bob.set(keyY, valueY);
+  bob.delete(keyY);
+  await new Promise((resolve) => setTimeout(resolve, 250));
+  const bobPromise = new Promise((resolve, reject) => {
+    bob.once('set', () => {
+      reject(new Error('Bob should not receive set event'));
+    });
+    bob.once('delete', () => {
+      reject(new Error('Bob should not receive delete event'));
+    });
+    setTimeout(resolve, 500);
+  });
+  const alicePromise = new Promise((resolve, reject) => {
+    alice.once('set', () => {
+      reject(new Error('Alice should not receive set event'));
+    });
+    alice.once('delete', () => {
+      reject(new Error('Alice should not receive delete event'));
+    });
+    setTimeout(resolve, 500);
+  });
+  alice.on('publish', (message) => {
+    bob.process(message);
+  });
+  bob.on('publish', (message) => {
+    alice.process(message);
+  });
+  alice.sync();
+  bob.sync();
+  await bobPromise;
+  await alicePromise;
+  expect(alice.get(keyX)).toBeUndefined();
+  expect(alice.get(keyY)).toBeUndefined();
+  expect(bob.get(keyX)).toBeUndefined();
+  expect(bob.get(keyY)).toBeUndefined();
+});
 
 test('Synchronize mixed maps using sync', async () => {
   const keyA = uuid.v4();
@@ -267,13 +363,17 @@ test('Synchronizes 100 asynchrous maps', async () => {
   const valueC = generateValue();
   const maps = [];
   const callbacks = [];
-  const publish = (message:Buffer) => {
+  const publish = (sourceId:number, message:Buffer) => {
     for (let i = 0; i < callbacks.length; i += 1) {
-      setTimeout(() => callbacks[i](message), Math.round(1000 * Math.random()));
+      const [targetId, callback] = callbacks[i];
+      if (targetId === sourceId) {
+        continue;
+      }
+      setTimeout(() => callback(message), Math.round(1000 * Math.random()));
     }
   };
-  const subscribe = (callback:Function) => {
-    callbacks.push(callback);
+  const subscribe = (targetId: number, callback:Function) => {
+    callbacks.push([targetId, callback]);
   };
   const getPair = () => {
     const mapA = maps[Math.floor(Math.random() * maps.length)];
@@ -285,8 +385,8 @@ test('Synchronizes 100 asynchrous maps', async () => {
   };
   for (let i = 0; i < 100; i += 1) {
     const map = new ObservedRemoveMap();
-    map.on('publish', publish);
-    subscribe((message) => map.process(message));
+    map.on('publish', (message) => publish(i, message));
+    subscribe(i, (message) => map.process(message));
     maps.push(map);
   }
   const [alice, bob] = getPair();
