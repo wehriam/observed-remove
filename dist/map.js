@@ -26,6 +26,13 @@ class ObservedRemoveMap       extends EventEmitter {
                    
                                 
 
+  /**
+   * Create a observed-remove map.
+   * @param {Iterable<K, V>} entries Iterable of initial values
+   * @param {Object} options
+   * @param {String} [options.maxAge=5000] Max age of insertion/deletion identifiers
+   * @param {String} [options.bufferPublishing=20] Interval by which to buffer 'publish' events
+   */
   constructor(entries                   , options          = {}) {
     super();
     this.maxAge = typeof options.maxAge === 'undefined' ? 5000 : options.maxAge;
@@ -38,7 +45,7 @@ class ObservedRemoveMap       extends EventEmitter {
     if (!entries) {
       return;
     }
-    for (const [key, value] of entries) { // eslint-disable-line no-restricted-syntax
+    for (const [key, value] of entries) {
       this.set(key, value);
     }
   }
@@ -60,7 +67,7 @@ class ObservedRemoveMap       extends EventEmitter {
     }
   }
 
-  async publish() {
+  publish() {
     this.publishTimeout = null;
     const queue = this.queue;
     this.queue = [];
@@ -69,7 +76,7 @@ class ObservedRemoveMap       extends EventEmitter {
 
   flush() {
     const now = Date.now();
-    for (const id of this.deletions) { // eslint-disable-line no-restricted-syntax
+    for (const id of this.deletions) {
       const timestamp = parseInt(id.slice(0, 9), 36);
       if (now - timestamp > this.maxAge) {
         this.insertions.removeSource(id);
@@ -78,9 +85,13 @@ class ObservedRemoveMap       extends EventEmitter {
     }
   }
 
+  /**
+   * Return an array containing all of the map's insertions and deletions.
+   * @return {Array<Array<any>>}
+   */
   dump() {
     const queue = [...this.deletions].map((id) => [id]);
-    for (const [id, key] of this.insertions.edges) { // eslint-disable-line no-restricted-syntax
+    for (const [id, key] of this.insertions.edges) {
       const value = this.valueMap.get(id);
       if (typeof value !== 'undefined') {
         queue.push([id, [key, value]]);
@@ -89,37 +100,56 @@ class ObservedRemoveMap       extends EventEmitter {
     return queue;
   }
 
+  /**
+   * Emit a 'publish' event containing all of the map's insertions and deletions.
+   * @return {void}
+   */
   sync() {
-    this.queue = this.queue.concat(this.dump());
-    if (this.publishTimeout) {
-      clearTimeout(this.publishTimeout);
-    }
-    this.publish();
+    this.emit('publish', this.dump());
   }
 
-  async process(queue           ) {
-    for (const [id       , tuple               ] of queue) { // eslint-disable-line no-restricted-syntax
+  /**
+   * Process an array of insertion and deletions.
+   * @param {Array<Array<any>>} queue - Array of insertions and deletions
+   * @return {void}
+   */
+  process(queue           ) {
+    let keys = new Set();
+    for (const [id       ] of queue) {
+      keys = new Set([...keys, ...this.insertions.getTargets(id)]);
+    }
+    const keyMap = new Map([...keys].map((key) => [key, this.activeId(key)]));
+    const newKeys = new Set();
+    for (const [id       , tuple               ] of queue) {
       if (tuple && id) {
         const [key, value] = tuple;
-        const activeValue = this.get(key);
         this.valueMap.set(id, value);
         this.insertions.addEdge(id, key);
-        const newValue = this.get(key);
-        if (!activeValue || (newValue && stringify(activeValue) !== stringify(newValue))) {
-          this.emit('set', newValue);
-        }
+        newKeys.add(key);
       } else if (id) {
-        const keys = this.insertions.getTargets(id);
-        for (const k of keys) { // eslint-disable-line no-restricted-syntax
-          const activeId = this.activeId(k);
-          this.deletions.add(id);
-          const newActiveId = this.activeId(k);
-          if (activeId && !newActiveId) {
-            const activeValue = this.valueMap.get(activeId);
-            if (activeValue) {
-              this.emit('delete', k, activeValue);
-            }
-          }
+        this.deletions.add(id);
+      }
+    }
+    const newKeyMap = new Map([...newKeys].map((key) => [key, this.activeId(key)]));
+    for (const [key, oldId] of keyMap) {
+      const newId = newKeyMap.get(key);
+      if (!newId) {
+        const value = this.valueMap.get(oldId);
+        if (value) {
+          this.emit('delete', key, value);
+        }
+      } else if (newId && (oldId !== newId)) {
+        const value = this.valueMap.get(newId);
+        if (value) {
+          this.emit('set', key, value);
+        }
+      }
+    }
+    for (const [key, newId] of newKeyMap) {
+      if (!keyMap.get(key)) {
+        const value = this.valueMap.get(newId);
+        if (value) {
+          this.emit('set', key, value);
         }
       }
     }
@@ -161,7 +191,7 @@ class ObservedRemoveMap       extends EventEmitter {
     if (activeId) {
       value = this.valueMap.get(activeId);
     }
-    for (const id of insertions) { // eslint-disable-line no-restricted-syntax
+    for (const id of insertions) {
       this.deletions.add(id);
       this.queue.push([id]);
     }
@@ -179,7 +209,7 @@ class ObservedRemoveMap       extends EventEmitter {
   }
 
   clear() {
-    for (const key of this.keys()) { // eslint-disable-line no-restricted-syntax
+    for (const key of this.keys()) {
       this.delete(key);
     }
   }
@@ -203,11 +233,11 @@ class ObservedRemoveMap       extends EventEmitter {
 
   forEach(callback         , thisArg     ) {
     if (thisArg) {
-      for (const [key, value] of this.entries()) { // eslint-disable-line no-restricted-syntax
+      for (const [key, value] of this.entries()) {
         callback.bind(thisArg)(value, key, this);
       }
     } else {
-      for (const [key, value] of this.entries()) { // eslint-disable-line no-restricted-syntax
+      for (const [key, value] of this.entries()) {
         callback(value, key, this);
       }
     }
@@ -225,7 +255,7 @@ class ObservedRemoveMap       extends EventEmitter {
     const keys          = [];
     ids.forEach((id) => {
       const ks = this.insertions.getTargets(id);
-      for (const key of ks) { // eslint-disable-line no-restricted-syntax
+      for (const key of ks) {
         keys.push(key);
       }
     });
@@ -248,13 +278,6 @@ class ObservedRemoveMap       extends EventEmitter {
     return values[Symbol.iterator]();
   }
 
-  /**
-   * Member count
-   *
-   * @name ObservedRemoveSet#size
-   * @type number
-   * @readonly
-   */
   get size()        {
     const insertions = this.insertions.sources;
     return [...insertions].filter((id) => !this.deletions.has(id)).length;

@@ -15,7 +15,9 @@
     "lint:js": "./node_modules/.bin/eslint -c ./.eslintrc --no-eslintrc --fix .",
     "lint:flow": "./node_modules/.bin/flow --show-all-errors",
     "coverage": "codecov",
-    "documentation": "documentation readme src/set.js --section='Set API' && documentation readme src/map.js --section='Map API'"
+    "documentation": "documentation readme src/set.js --section='Set API' && documentation readme src/map.js --section='Map API'",
+    "start-pre-commit": "git stash -q --keep-index",
+    "end-pre-commit": "git add -u && git stash pop -q"
   },
   "lint-staged": {
     "*.js": [
@@ -24,8 +26,10 @@
   },
   "pre-commit": [
     "lint:staged",
+    "start-pre-commit",
     "build",
-    "documentation"
+    "documentation",
+    "end-pre-commit"
   ],
   "jest": {
     "coverageDirectory": "./coverage/",
