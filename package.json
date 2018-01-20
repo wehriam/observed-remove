@@ -15,7 +15,7 @@
     "lint:js": "./node_modules/.bin/eslint -c ./.eslintrc --no-eslintrc --fix .",
     "lint:flow": "./node_modules/.bin/flow --show-all-errors",
     "coverage": "codecov",
-    "documentation": "documentation build src/set.js -f md"
+    "documentation": "documentation readme src/set.js --section='Set API' && documentation readme src/map.js --section='Map API'"
   },
   "lint-staged": {
     "*.js": [
@@ -25,6 +25,7 @@
   "pre-commit": [
     "lint:staged",
     "build"
+    "documentation"
   ],
   "jest": {
     "coverageDirectory": "./coverage/",
