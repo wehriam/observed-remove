@@ -71,6 +71,8 @@ bob.get('a'); // 1
 
 Class representing an observed-remove set
 
+Implements [all methods and iterators of the native `Set` object]<https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set> in addition to the following.
+
 **Parameters**
 
 -   `entries` **Iterable&lt;T>** 
@@ -113,7 +115,9 @@ Returns **void**
 
 **Extends EventEmitter**
 
-Class representing a Observed Remove Set
+Class representing a Observed Remove Map
+
+Implements [all methods and iterators of the native `Map` object]<https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map> in addition to the following.
 
 **Parameters**
 

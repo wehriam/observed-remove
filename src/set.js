@@ -16,6 +16,8 @@ type QueueType = Array<Array<any>>;
 
 /**
  * Class representing an observed-remove set
+ *
+ * Implements [all methods and iterators of the native `Set` object]{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set} in addition to the following.
  */
 class ObservedRemoveSet<T> extends EventEmitter {
   maxAge: number;
@@ -116,7 +118,7 @@ class ObservedRemoveSet<T> extends EventEmitter {
    * @return {void}
    */
   process(queue: QueueType) {
-    const queueWithHashes = rawQueue.map(([id:string, value:any]) => {
+    const queueWithHashes = queue.map(([id:string, value:any]) => {
       if (value && id) {
         const hash = this.hash(value);
         return [id, value, hash];
