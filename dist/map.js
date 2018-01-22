@@ -86,6 +86,14 @@ class ObservedRemoveMap       extends EventEmitter {
         this.deletions.delete(id);
       }
     }
+    for (const key of this.insertions.targets) {
+      const ids = Array.from(this.insertions.getSources(key));
+      ids.sort();
+      if (ids.length > 1) {
+        this.insertions.removeTarget(key);
+        this.insertions.addEdge(ids[ids.length - 1], key);
+      }
+    }
   }
 
   /**

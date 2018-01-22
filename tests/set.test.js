@@ -170,6 +170,24 @@ test('Flush values', async () => {
   expect(set.insertions.size).toEqual(0);
 });
 
+test('Flush adds', async () => {
+  const X = generateValue();
+  const Y = generateValue();
+  const Z = generateValue();
+  const set = new ObservedRemoveSet([X, Y, Z]);
+  set.flush();
+  expect(set.deletions.size).toEqual(0);
+  expect(set.insertions.size).toEqual(3);
+  set.add(X);
+  set.add(Y);
+  set.add(Z);
+  expect(set.deletions.size).toEqual(0);
+  expect(set.insertions.size).toEqual(6);
+  set.flush();
+  expect(set.deletions.size).toEqual(0);
+  expect(set.insertions.size).toEqual(3);
+});
+
 test('Synchronize add and delete events', async () => {
   const X = generateValue();
   const Y = generateValue();

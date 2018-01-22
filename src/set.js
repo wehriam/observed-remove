@@ -88,6 +88,14 @@ class ObservedRemoveSet<T> extends EventEmitter {
         this.deletions.delete(id);
       }
     }
+    for (const hash of this.insertions.targets) {
+      const ids = Array.from(this.insertions.getSources(hash));
+      ids.sort();
+      if (ids.length > 1) {
+        this.insertions.removeTarget(hash);
+        this.insertions.addEdge(ids[ids.length - 1], hash);
+      }
+    }
   }
 
   /**

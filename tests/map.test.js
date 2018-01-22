@@ -209,6 +209,27 @@ test('Flush values', async () => {
   expect(map.insertions.size).toEqual(0);
 });
 
+test('Flush sets', async () => {
+  const keyX = uuid.v4();
+  const keyY = uuid.v4();
+  const keyZ = uuid.v4();
+  const valueX = generateValue();
+  const valueY = generateValue();
+  const valueZ = generateValue();
+  const map = new ObservedRemoveMap([[keyX, valueX], [keyY, valueY], [keyZ, valueZ]]);
+  map.flush();
+  expect(map.deletions.size).toEqual(0);
+  expect(map.insertions.size).toEqual(3);
+  map.set(keyX, valueX);
+  map.set(keyY, valueY);
+  map.set(keyZ, valueZ);
+  expect(map.deletions.size).toEqual(0);
+  expect(map.insertions.size).toEqual(6);
+  map.flush();
+  expect(map.deletions.size).toEqual(0);
+  expect(map.insertions.size).toEqual(3);
+});
+
 test('Synchronize set and delete events', async () => {
   const keyX = uuid.v4();
   const keyY = uuid.v4();
