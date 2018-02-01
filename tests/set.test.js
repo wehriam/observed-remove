@@ -107,10 +107,20 @@ test('Clear values', () => {
   const A = generateValue();
   const B = generateValue();
   const C = generateValue();
-  const set = new ObservedRemoveSet([A, B, C]);
+  const set = new ObservedRemoveSet([A, B, C], { maxAge: 0, bufferPublishing: 0 });
   expect(set.size).toEqual(3);
   set.clear();
   expect(set.size).toEqual(0);
+  expect(set.queue.length).toEqual(0);
+  expect(set.valueMap.size).toEqual(3);
+  expect(set.deletions.size).toEqual(3);
+  expect(set.insertions.size).toEqual(3);
+  set.flush();
+  expect(set.size).toEqual(0);
+  expect(set.queue.length).toEqual(0);
+  expect(set.valueMap.size).toEqual(0);
+  expect(set.deletions.size).toEqual(0);
+  expect(set.insertions.size).toEqual(0);
 });
 
 test('Synchronize sets', async () => {

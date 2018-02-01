@@ -84,16 +84,23 @@ class ObservedRemoveSet<T> extends EventEmitter {
     for (const id of this.deletions) {
       const timestamp = parseInt(id.slice(0, 9), 36);
       if (now - timestamp > this.maxAge) {
+        const hashes = this.insertions.getTargets(id);
         this.insertions.removeSource(id);
         this.deletions.delete(id);
+        for (const hash of hashes) {
+          if (this.insertions.getSources(hash).size === 0) {
+            this.valueMap.delete(hash);
+          }
+        }
       }
     }
     for (const hash of this.insertions.targets) {
       const ids = Array.from(this.insertions.getSources(hash));
       ids.sort();
-      if (ids.length > 1) {
-        this.insertions.removeTarget(hash);
-        this.insertions.addEdge(ids[ids.length - 1], hash);
+      for (let i = 0; i < ids.length - 1; i += 1) {
+        const id = ids[i];
+        this.insertions.removeEdge(id, hash);
+        this.deletions.delete(id);
       }
     }
   }

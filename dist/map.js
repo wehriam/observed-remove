@@ -84,14 +84,17 @@ class ObservedRemoveMap       extends EventEmitter {
       if (now - timestamp > this.maxAge) {
         this.insertions.removeSource(id);
         this.deletions.delete(id);
+        this.valueMap.delete(id);
       }
     }
     for (const key of this.insertions.targets) {
       const ids = Array.from(this.insertions.getSources(key));
       ids.sort();
-      if (ids.length > 1) {
-        this.insertions.removeTarget(key);
-        this.insertions.addEdge(ids[ids.length - 1], key);
+      for (let i = 0; i < ids.length - 1; i += 1) {
+        const id = ids[i];
+        this.insertions.removeEdge(id, key);
+        this.deletions.delete(id);
+        this.valueMap.delete(id);
       }
     }
   }

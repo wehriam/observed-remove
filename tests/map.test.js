@@ -127,10 +127,20 @@ test('Clear values', () => {
   const valueA = generateValue();
   const valueB = generateValue();
   const valueC = generateValue();
-  const map = new ObservedRemoveMap([[keyA, valueA], [keyB, valueB], [keyC, valueC]]);
+  const map = new ObservedRemoveMap([[keyA, valueA], [keyB, valueB], [keyC, valueC]], { maxAge: 0, bufferPublishing: 0 });
   expect(map.size).toEqual(3);
   map.clear();
   expect(map.size).toEqual(0);
+  expect(map.queue.length).toEqual(0);
+  expect(map.valueMap.size).toEqual(3);
+  expect(map.deletions.size).toEqual(3);
+  expect(map.insertions.size).toEqual(3);
+  map.flush();
+  expect(map.size).toEqual(0);
+  expect(map.queue.length).toEqual(0);
+  expect(map.valueMap.size).toEqual(0);
+  expect(map.deletions.size).toEqual(0);
+  expect(map.insertions.size).toEqual(0);
 });
 
 

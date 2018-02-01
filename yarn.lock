@@ -1695,9 +1695,9 @@ diff@^3.2.0:
   version "3.4.0"
   resolved "https://registry.yarnpkg.com/diff/-/diff-3.4.0.tgz#b1d85507daf3964828de54b37d0d73ba67dda56c"
 
-directed-graph-map@^1.2.2:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/directed-graph-map/-/directed-graph-map-1.2.2.tgz#cc8dd0f3e3a78b58acbefde19ba31d00066e0f11"
+directed-graph-map@^1.2.3:
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/directed-graph-map/-/directed-graph-map-1.2.3.tgz#d820730569578a8bdd602b19d2b27809746b501e"
 
 disparity@^2.0.0:
   version "2.0.0"
