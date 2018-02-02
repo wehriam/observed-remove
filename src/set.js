@@ -230,21 +230,26 @@ class ObservedRemoveSet<T> extends EventEmitter {
     }
   }
 
-  entries():Iterable<[T, T]> {
+  nativeSet():Set<T> {
     const insertions = this.insertions.sources;
     const ids = [...insertions].filter((id) => !this.deletions.has(id));
     ids.sort();
-    const entries:Array<[T, T]> = [];
-    ids.forEach((id) => {
+    const values:Map<string, T> = new Map();
+    for (let i = 0; i < ids.length; i += 1) {
+      const id = ids[i];
       this.insertions.getTargets(id).forEach((hash) => {
         const value = this.valueMap.get(hash);
-        if (typeof value !== 'undefined') {
-          entries.push([value, value]);
+        if (value) {
+          values.set(hash, value);
         }
       });
-    });
-    // $FlowFixMe: computed property
-    return entries[Symbol.iterator]();
+    }
+
+    return new Set(values.values());
+  }
+
+  entries():Iterable<[T, T]> {
+    return this.nativeSet().entries();
   }
 
   forEach(callback:Function, thisArg?:any) {
@@ -266,20 +271,7 @@ class ObservedRemoveSet<T> extends EventEmitter {
   }
 
   values():Iterable<T> {
-    const insertions = this.insertions.sources;
-    const ids = [...insertions].filter((id) => !this.deletions.has(id));
-    ids.sort();
-    const values:Array<T> = [];
-    ids.forEach((id) => {
-      this.insertions.getTargets(id).forEach((hash) => {
-        const value = this.valueMap.get(hash);
-        if (typeof value !== 'undefined') {
-          values.push(value);
-        }
-      });
-    });
-    // $FlowFixMe: computed property
-    return values[Symbol.iterator]();
+    return this.nativeSet().values();
   }
 
   hash(value:T) {

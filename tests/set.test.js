@@ -328,6 +328,19 @@ test('Synchronize mixed sets using sync', async () => {
   expect([...bob]).toEqual([A, X, B, Y, C, Z]);
 });
 
+test('Values should not repeat', async () => {
+  const value = generateValue();
+  const alice = new ObservedRemoveSet();
+  alice.add(value);
+  alice.add(value);
+  expect([...alice].length).toEqual(1);
+  expect([...alice.values()].length).toEqual(1);
+  expect([...alice.entries()].length).toEqual(1);
+  expect([...alice]).toEqual([value]);
+  expect([...alice.values()]).toEqual([value]);
+  expect([...alice.entries()]).toEqual([[value, value]]);
+});
+
 test('Synchronizes 100 asynchrous sets', async () => {
   const A = generateValue();
   const B = generateValue();

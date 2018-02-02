@@ -190,7 +190,7 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
     const insertions = this.insertions.getSources(key);
     const activeValues = [...insertions].filter((id) => !this.deletions.has(id));
     activeValues.sort();
-    const activeId = activeValues[0];
+    const activeId = activeValues[activeValues.length - 1];
     if (activeId) {
       return this.valueMap.get(activeId);
     }
@@ -201,7 +201,7 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
     const activeValues = [...insertions].filter((id) => !this.deletions.has(id));
     activeValues.sort();
     let value;
-    const activeId = activeValues[0];
+    const activeId = activeValues[activeValues.length - 1];
     if (activeId) {
       value = this.valueMap.get(activeId);
     }
@@ -219,7 +219,7 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
     const insertions = this.insertions.getSources(key);
     const activeValues = [...insertions].filter((id) => !this.deletions.has(id));
     activeValues.sort();
-    return activeValues[0];
+    return activeValues[activeValues.length - 1];
   }
 
   clear() {
@@ -228,21 +228,26 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
     }
   }
 
-  entries():Iterable<[K, V]> {
+  nativeMap():Map<K, V> {
     const insertions = this.insertions.sources;
     const ids = [...insertions].filter((id) => !this.deletions.has(id));
     ids.sort();
-    const entries:Array<[K, V]> = [];
-    ids.forEach((id) => {
+    const entries:Map<K, V> = new Map();
+    for (let i = 0; i < ids.length; i += 1) {
+      const id = ids[i];
       const value = this.valueMap.get(id);
       if (typeof value !== 'undefined') {
         this.insertions.getTargets(id).forEach((key) => {
-          entries.push([key, value]);
+          entries.set(key, value);
         });
       }
-    });
+    }
+    return entries;
+  }
+
+  entries():Iterable<[K, V]> {
     // $FlowFixMe: computed property
-    return entries[Symbol.iterator]();
+    return this.nativeMap().entries();
   }
 
   forEach(callback:Function, thisArg?:any) {
@@ -263,33 +268,11 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
   }
 
   keys():Iterable<K> {
-    const insertions = this.insertions.sources;
-    const ids = [...insertions].filter((id) => !this.deletions.has(id));
-    ids.sort();
-    const keys:Array<K> = [];
-    ids.forEach((id) => {
-      const ks = this.insertions.getTargets(id);
-      for (const key of ks) {
-        keys.push(key);
-      }
-    });
-    // $FlowFixMe: computed property
-    return keys[Symbol.iterator]();
+    return this.nativeMap().keys();
   }
 
   values():Iterable<V> {
-    const insertions = this.insertions.sources;
-    const ids = [...insertions].filter((id) => !this.deletions.has(id));
-    ids.sort();
-    const values:Array<V> = [];
-    ids.forEach((id) => {
-      const value = this.valueMap.get(id);
-      if (typeof value !== 'undefined') {
-        values.push(value);
-      }
-    });
-    // $FlowFixMe: computed property
-    return values[Symbol.iterator]();
+    return this.nativeMap().values();
   }
 
   get size():number {

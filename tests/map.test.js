@@ -384,6 +384,23 @@ test('Synchronize mixed maps using sync', async () => {
   expect([...bob]).toEqual([[keyA, valueA], [keyX, valueX], [keyB, valueB], [keyY, valueY], [keyC, valueC], [keyZ, valueZ]]);
 });
 
+test('Key-value pairs should not repeat', async () => {
+  const key = uuid.v4();
+  const value1 = generateValue();
+  const value2 = generateValue();
+  const alice = new ObservedRemoveMap();
+  alice.set(key, value1);
+  alice.set(key, value2);
+  expect([...alice].length).toEqual(1);
+  expect([...alice.entries()].length).toEqual(1);
+  expect([...alice.keys()].length).toEqual(1);
+  expect([...alice.values()].length).toEqual(1);
+  expect([...alice]).toEqual([[key, value2]]);
+  expect([...alice.entries()]).toEqual([[key, value2]]);
+  expect([...alice.keys()]).toEqual([key]);
+  expect([...alice.values()]).toEqual([value2]);
+  expect(alice.get(key)).toEqual(value2);
+});
 
 test('Synchronizes 100 asynchrous maps', async () => {
   const keyA = uuid.v4();
