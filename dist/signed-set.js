@@ -100,11 +100,11 @@ class SignedObservedRemoveSet    extends ObservedRemoveSet    {
   }
 
   add() {
-    throw new Error('Unsupported method delete(), use signedDelete()');
+    throw new Error('Unsupported method add(), use addSigned()');
   }
 
   delete() {
-    throw new Error('Unsupported method delete(), use signedDelete()');
+    throw new Error('Unsupported method delete(), use deleteSignedId()');
   }
 }
 

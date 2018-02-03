@@ -85,7 +85,7 @@ Emit a 'publish' event containing a specified queue or all of the set's insertio
 
 **Parameters**
 
--   `queue` **QueueType**  (optional, default `this.dump()`)
+-   `queue` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>>** Array of insertions and deletions (optional, default `this.dump()`)
 
 Returns **void** 
 
@@ -139,7 +139,11 @@ Returns **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Gl
 
 #### sync
 
-Emit a 'publish' event containing all of the map's insertions and deletions.
+Emit a 'publish' event containing a specified queue or all of the set's insertions and deletions.
+
+**Parameters**
+
+-   `queue` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>>** Array of insertions and deletions (optional, default `this.dump()`)
 
 Returns **void** 
 

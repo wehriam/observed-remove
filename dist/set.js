@@ -78,6 +78,7 @@ class ObservedRemoveSet    extends EventEmitter {
 
   /**
    * Emit a 'publish' event containing a specified queue or all of the set's insertions and deletions.
+   * @param {Array<Array<any>>} queue - Array of insertions and deletions
    * @return {void}
    */
   sync(queue             = this.dump()) {

@@ -1,20 +1,20 @@
-// @flow
+//      
 
-const ObservedRemoveSet = require('./set');
+const ObservedRemoveMap = require('./map');
 const getVerifier = require('./verifier');
 const stringify = require('json-stringify-deterministic');
 
-type QueueType = Array<Array<any>>;
+                                   
 
-type Options = {
-  maxAge?:number,
-  bufferPublishing?:number,
-  key: any,
-  format?: string
-};
+                
+                 
+                           
+           
+                 
+  
 
-class SignedObservedRemoveSet<T> extends ObservedRemoveSet<T> {
-  constructor(entries?: Iterable<[T, string, string]>, options?:Options) {
+class SignedObservedRemoveMap       extends ObservedRemoveMap       {
+  constructor(entries                                   , options         ) {
     super([], options);
     if (!options || !options.key) {
       throw new Error('Missing required options.key parameter');
@@ -25,14 +25,14 @@ class SignedObservedRemoveSet<T> extends ObservedRemoveSet<T> {
     if (!entries) {
       return;
     }
-    for (const [value, id, signature] of entries) {
-      this.addSigned(value, id, signature);
+    for (const [key, value, id, signature] of entries) {
+      this.setSigned(key, value, id, signature);
     }
   }
 
-  insertionSignatureMap: Map<string, string>;
-  deletionSignatureMap: Map<string, string>;
-  verify: (string, ...Array<any>) => boolean;
+                                             
+                                            
+                                             
 
   flush() {
     super.flush();
@@ -48,29 +48,26 @@ class SignedObservedRemoveSet<T> extends ObservedRemoveSet<T> {
     }
   }
 
-  /**
-   * Return an array containing all of the set's insertions and deletions.
-   * @return {Array<Array<any>>}
-   */
   dump() {
     const queue = super.dump();
-    return queue.map(([id, value]) => {
-      if (value) {
-        return [this.insertionSignatureMap.get(id), id, value];
+    return queue.map(([id, pair]) => {
+      if (pair) {
+        return [this.insertionSignatureMap.get(id), id, pair];
       }
       return [this.deletionSignatureMap.get(id), id];
     });
   }
 
-  process(signedQueue: QueueType, skipFlush?: boolean = false) {
+  process(signedQueue           , skipFlush           = false) {
     const queue = signedQueue.map((item) => {
-      const [signature, id, value] = item;
-      if (value) {
-        if (!this.verify(signature, value, id)) {
+      const [signature, id, pair] = item;
+      if (pair) {
+        const [key, value] = pair;
+        if (!this.verify(signature, key, value, id)) {
           throw new Error(`Signature does not match for value ${stringify(value)}`);
         }
         this.insertionSignatureMap.set(id, signature);
-        return [id, value];
+        return [id, pair];
       }
       if (!this.verify(signature, id)) {
         throw new Error(`Signature does not match for id ${stringify(id)}`);
@@ -81,14 +78,14 @@ class SignedObservedRemoveSet<T> extends ObservedRemoveSet<T> {
     super.process(queue, skipFlush);
   }
 
-  addSigned(value:T, id:string, signature:string) {
-    const message = [signature, id, value];
+  setSigned(key  , value  , id       , signature       ) {
+    const message = [signature, id, [key, value]];
     this.process([message], true);
     this.queue.push(message);
     this.dequeue();
   }
 
-  deleteSignedId(id:string, signature:string) {
+  deleteSignedId(id       , signature       ) {
     const message = [signature, id];
     this.process([message], true);
     this.queue.push(message);
@@ -99,8 +96,8 @@ class SignedObservedRemoveSet<T> extends ObservedRemoveSet<T> {
     throw new Error('Unsupported method clear()');
   }
 
-  add() {
-    throw new Error('Unsupported method add(), use addSigned()');
+  set() {
+    throw new Error('Unsupported method set(), use setSigned()');
   }
 
   delete() {
@@ -108,4 +105,4 @@ class SignedObservedRemoveSet<T> extends ObservedRemoveSet<T> {
   }
 }
 
-module.exports = SignedObservedRemoveSet;
+module.exports = SignedObservedRemoveMap;

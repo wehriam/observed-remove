@@ -113,11 +113,12 @@ class ObservedRemoveMap       extends EventEmitter {
   }
 
   /**
-   * Emit a 'publish' event containing all of the map's insertions and deletions.
+   * Emit a 'publish' event containing a specified queue or all of the set's insertions and deletions.
+   * @param {Array<Array<any>>} queue - Array of insertions and deletions
    * @return {void}
    */
-  sync() {
-    this.emit('publish', this.dump());
+  sync(queue             = this.dump()) {
+    this.emit('publish', queue);
   }
 
   /**
@@ -230,7 +231,6 @@ class ObservedRemoveMap       extends EventEmitter {
   }
 
   entries()                  {
-    // $FlowFixMe: computed property
     return this.nativeMap().entries();
   }
 
