@@ -1,8 +1,9 @@
 //      
 
+const stringify = require('json-stringify-deterministic');
 const ObservedRemoveSet = require('./set');
 const getVerifier = require('./verifier');
-const stringify = require('json-stringify-deterministic');
+const { InvalidSignatureError } = require('./signed-error');
 
                                    
 
@@ -67,13 +68,13 @@ class SignedObservedRemoveSet    extends ObservedRemoveSet    {
       const [signature, id, value] = item;
       if (value) {
         if (!this.verify(signature, value, id)) {
-          throw new Error(`Signature does not match for value ${stringify(value)}`);
+          throw new InvalidSignatureError(`Signature does not match for value ${stringify(value)}`);
         }
         this.insertionSignatureMap.set(id, signature);
         return [id, value];
       }
       if (!this.verify(signature, id)) {
-        throw new Error(`Signature does not match for id ${stringify(id)}`);
+        throw new InvalidSignatureError(`Signature does not match for id ${stringify(id)}`);
       }
       this.deletionSignatureMap.set(id, signature);
       return [id];

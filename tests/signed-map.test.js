@@ -2,7 +2,7 @@
 
 const expect = require('expect');
 const uuid = require('uuid');
-const { SignedObservedRemoveMap, getSigner, generateId } = require('../src');
+const { InvalidSignatureError, SignedObservedRemoveMap, getSigner, generateId } = require('../src');
 const { generateValue } = require('./lib/values');
 const NodeRSA = require('node-rsa');
 
@@ -63,17 +63,17 @@ test('Throw on invalid signatures', () => {
   expect(() => {
     id = generateId();
     new SignedObservedRemoveMap([[keyA, valueA, id, '***']], { key }); // eslint-disable-line no-new
-  }).toThrow();
+  }).toThrowError(InvalidSignatureError);
   expect(() => {
     id = generateId();
     map.setSigned(keyA, valueA, id, '***');
-  }).toThrow();
+  }).toThrowError(InvalidSignatureError);
   id = generateId();
   map.setSigned(keyA, valueA, id, sign(keyA, valueA, id));
   expect(() => {
     const ids = map.activeIds(keyA);
     ids.forEach((d) => map.deleteSignedId(d, '***'));
-  }).toThrow();
+  }).toThrowError(InvalidSignatureError);
 });
 
 test('Throw on clear', () => {

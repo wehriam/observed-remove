@@ -7,3 +7,4 @@ module.exports.SignedObservedRemoveMap = require('./signed-map');
 module.exports.ObservedRemoveSet = require('./set');
 module.exports.ObservedRemoveMap = require('./map');
 module.exports.generateId = require('./generate-id');
+module.exports.InvalidSignatureError = require('./signed-error').InvalidSignatureError;

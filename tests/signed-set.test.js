@@ -1,7 +1,7 @@
 // @flow
 
 const expect = require('expect');
-const { SignedObservedRemoveSet, getSigner, generateId } = require('../src');
+const { InvalidSignatureError, SignedObservedRemoveSet, getSigner, generateId } = require('../src');
 const { generateValue } = require('./lib/values');
 const NodeRSA = require('node-rsa');
 
@@ -58,17 +58,17 @@ test('Throw on invalid signatures', () => {
   expect(() => {
     id = generateId();
     new SignedObservedRemoveSet([[A, id, '***']], { key }); // eslint-disable-line no-new
-  }).toThrow();
+  }).toThrowError(InvalidSignatureError);
   expect(() => {
     id = generateId();
     set.addSigned(A, id, '***');
-  }).toThrow();
+  }).toThrowError(InvalidSignatureError);
   id = generateId();
   set.addSigned(A, id, sign(A, id));
   expect(() => {
     const ids = set.activeIds(A);
     ids.forEach((d) => set.deleteSignedId(d, '***'));
-  }).toThrow();
+  }).toThrowError(InvalidSignatureError);
 });
 
 test('Throw on clear', () => {
