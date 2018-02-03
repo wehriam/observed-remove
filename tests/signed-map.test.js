@@ -55,6 +55,92 @@ test('Set and delete values', () => {
   expect([...map.entries()]).toEqual([[keyA, valueA], [keyB, valueB]]);
 });
 
+test('Throw on invalid signatures', () => {
+  let id;
+  const keyA = uuid.v4();
+  const valueA = generateValue();
+  const map = new SignedObservedRemoveMap([], { key });
+  expect(() => {
+    id = generateId();
+    new SignedObservedRemoveMap([[keyA, valueA, id, '***']], { key }); // eslint-disable-line no-new
+  }).toThrow();
+  expect(() => {
+    id = generateId();
+    map.setSigned(keyA, valueA, id, '***');
+  }).toThrow();
+  id = generateId();
+  map.setSigned(keyA, valueA, id, sign(keyA, valueA, id));
+  expect(() => {
+    const ids = map.activeIds(keyA);
+    ids.forEach((d) => map.deleteSignedId(d, '***'));
+  }).toThrow();
+});
+
+test('Throw on clear', () => {
+  const map = new SignedObservedRemoveMap([], { key });
+  expect(() => {
+    map.clear();
+  }).toThrow();
+});
+
+
+test('Throw on invalid synchronization', async () => {
+  let id;
+  let ids;
+  const alicePrivateKey = new NodeRSA({ b: 512 });
+  const aliceSign = getSigner(alicePrivateKey.exportKey('pkcs1-private-pem'));
+  const aliceKey = alicePrivateKey.exportKey('pkcs1-public-pem');
+  const bobPrivateKey = new NodeRSA({ b: 512 });
+  const bobSign = getSigner(bobPrivateKey.exportKey('pkcs1-private-pem'));
+  const bobKey = bobPrivateKey.exportKey('pkcs1-public-pem');
+  const keyX = uuid.v4();
+  const keyY = uuid.v4();
+  const valueX = generateValue();
+  const valueY = generateValue();
+  const alice = new SignedObservedRemoveMap([], { key: aliceKey });
+  const bob = new SignedObservedRemoveMap([], { key: bobKey });
+  const bobMessage1 = await new Promise((resolve) => {
+    bob.on('publish', (message) => {
+      resolve(message);
+    });
+    id = generateId();
+    bob.setSigned(keyX, valueX, id, bobSign(keyX, valueX, id));
+  });
+  expect(() => {
+    alice.process(bobMessage1);
+  }).toThrow();
+  const aliceMessage1 = await new Promise((resolve) => {
+    alice.on('publish', (message) => {
+      resolve(message);
+    });
+    id = generateId();
+    alice.setSigned(keyY, valueY, id, aliceSign(keyY, valueY, id));
+  });
+  expect(() => {
+    bob.process(aliceMessage1);
+  }).toThrow();
+  const bobMessage2 = await new Promise((resolve) => {
+    bob.on('publish', (message) => {
+      resolve(message);
+    });
+    ids = bob.activeIds(keyX);
+    ids.forEach((d) => bob.deleteSignedId(d, bobSign(d)));
+  });
+  expect(() => {
+    alice.process(bobMessage2);
+  }).toThrow();
+  const aliceMessage2 = await new Promise((resolve) => {
+    alice.on('publish', (message) => {
+      resolve(message);
+    });
+    ids = alice.activeIds(keyY);
+    ids.forEach((d) => alice.deleteSignedId(d, aliceSign(d)));
+  });
+  expect(() => {
+    bob.process(aliceMessage2);
+  }).toThrow();
+});
+
 test('Emit set and delete events', async () => {
   let id;
   let ids;
