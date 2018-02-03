@@ -4,13 +4,12 @@ const { EventEmitter } = require('events');
 const DirectedGraphMap = require('directed-graph-map');
 const stringify = require('json-stringify-deterministic');
 const murmurHash3 = require('murmur-hash').v3;
+const generateId = require('./generate-id');
 
 type Options = {
   maxAge?:number,
   bufferPublishing?:number
 };
-
-let idCounter = 0;
 
 type QueueType = Array<Array<any>>;
 
@@ -28,7 +27,6 @@ class ObservedRemoveSet<T> extends EventEmitter {
   deletions: Set<string>;
   queue: QueueType;
   publishTimeout: null | TimeoutID;
-  processing: boolean;
 
   /**
    * Create an observed-remove set.
@@ -52,7 +50,6 @@ class ObservedRemoveSet<T> extends EventEmitter {
     for (const value of entries) {
       this.add(value);
     }
-    this.processing = false;
   }
 
   /* :: @@iterator(): Iterator<T> { return ({}: any); } */
@@ -76,6 +73,14 @@ class ObservedRemoveSet<T> extends EventEmitter {
     this.publishTimeout = null;
     const queue = this.queue;
     this.queue = [];
+    this.sync(queue);
+  }
+
+  /**
+   * Emit a 'publish' event containing a specified queue or all of the set's insertions and deletions.
+   * @return {void}
+   */
+  sync(queue?: QueueType = this.dump()) {
     this.emit('publish', queue);
   }
 
@@ -121,19 +126,11 @@ class ObservedRemoveSet<T> extends EventEmitter {
   }
 
   /**
-   * Emit a 'publish' event containing all of the set's insertions and deletions.
-   * @return {void}
-   */
-  sync() {
-    this.emit('publish', this.dump());
-  }
-
-  /**
    * Process an array of insertion and deletions.
    * @param {Array<Array<any>>} queue - Array of insertions and deletions
    * @return {void}
    */
-  process(queue: QueueType) {
+  process(queue: QueueType, skipFlush?: boolean = false) {
     const queueWithHashes = queue.map(([id:string, value:any]) => {
       if (value && id) {
         const hash = this.hash(value);
@@ -189,39 +186,30 @@ class ObservedRemoveSet<T> extends EventEmitter {
         }
       }
     }
-    this.flush();
+    if (!skipFlush) {
+      this.flush();
+    }
   }
 
-  add(value:T) {
-    const normalizedDateString = Date.now().toString(36).padStart(9, '0');
-    const idCounterString = idCounter.toString(36);
-    const randomString = Math.round(Number.MAX_SAFE_INTEGER / 2 + Number.MAX_SAFE_INTEGER * Math.random() / 2).toString(36);
-    const id = (`${normalizedDateString}${idCounterString}${randomString}`).slice(0, 16);
-    idCounter += 1;
+  add(value:T, id?:string = generateId()) {
+    const message = [id, value];
+    this.process([message], true);
+    this.queue.push(message);
+    this.dequeue();
+  }
+
+  activeIds(value:T) {
     const hash = this.hash(value);
     const insertions = this.insertions.getSources(hash);
-    const hasValue = [...insertions].filter((id2) => !this.deletions.has(id2)).length > 0;
-    this.valueMap.set(hash, value);
-    this.insertions.addEdge(id, hash);
-    this.queue.push([id, value]);
-    this.dequeue();
-    if (!hasValue) {
-      this.emit('add', value);
-    }
+    return [...insertions].filter((id) => !this.deletions.has(id));
   }
 
   delete(value:T) {
-    const hash = this.hash(value);
-    const insertions = this.insertions.getSources(hash);
-    const hasValue = [...insertions].filter((id) => !this.deletions.has(id)).length > 0;
-    for (const id of insertions) {
-      this.deletions.add(id);
-      this.queue.push([id]);
-    }
+    const activeIds = this.activeIds(value);
+    const queue = activeIds.map((id) => [id]);
+    this.process(queue, true);
+    this.queue = this.queue.concat(queue);
     this.dequeue();
-    if (hasValue) {
-      this.emit('delete', value);
-    }
   }
 
   clear() {
@@ -244,7 +232,6 @@ class ObservedRemoveSet<T> extends EventEmitter {
         }
       });
     }
-
     return new Set(values.values());
   }
 
@@ -265,9 +252,7 @@ class ObservedRemoveSet<T> extends EventEmitter {
   }
 
   has(value:T) {
-    const hash = this.hash(value);
-    const insertions = this.insertions.getSources(hash);
-    return [...insertions].filter((id) => !this.deletions.has(id)).length > 0;
+    return this.activeIds(value).length > 0;
   }
 
   values():Iterable<T> {

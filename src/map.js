@@ -2,7 +2,7 @@
 
 const { EventEmitter } = require('events');
 const DirectedGraphMap = require('directed-graph-map');
-const stringify = require('json-stringify-deterministic');
+const generateId = require('./generate-id');
 
 type Options = {
   maxAge?:number,
@@ -10,8 +10,6 @@ type Options = {
 };
 
 type QueueType = Array<Array<any>>;
-
-let idCounter = 0;
 
 /**
  * Class representing a Observed Remove Map
@@ -127,7 +125,7 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
    * @param {Array<Array<any>>} queue - Array of insertions and deletions
    * @return {void}
    */
-  process(queue: QueueType) {
+  process(queue: QueueType, skipFlush?: boolean = false) {
     let keys = new Set();
     for (const [id:string] of queue) {
       keys = new Set([...keys, ...this.insertions.getTargets(id)]);
@@ -167,59 +165,45 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
         }
       }
     }
-    this.flush();
+    if (!skipFlush) {
+      this.flush();
+    }
   }
 
-  set(key:K, value:V) {
-    const activeValue = this.get(key);
-    const normalizedDateString = Date.now().toString(36).padStart(9, '0');
-    const idCounterString = idCounter.toString(36);
-    const randomString = Math.round(Number.MAX_SAFE_INTEGER / 2 + Number.MAX_SAFE_INTEGER * Math.random() / 2).toString(36);
-    const id = (`${normalizedDateString}${idCounterString}${randomString}`).slice(0, 16);
-    idCounter += 1;
-    this.valueMap.set(id, value);
-    this.insertions.addEdge(id, key);
-    this.queue.push([id, [key, value]]);
+  set(key:K, value:V, id?: string = generateId()) {
+    const message = [id, [key, value]];
+    this.process([message], true);
+    this.queue.push(message);
     this.dequeue();
-    if (!activeValue || (activeValue && stringify(activeValue) !== stringify(value))) {
-      this.emit('set', key, value);
-    }
   }
 
   get(key:K) { // eslint-disable-line consistent-return
     const insertions = this.insertions.getSources(key);
-    const activeValues = [...insertions].filter((id) => !this.deletions.has(id));
-    activeValues.sort();
-    const activeId = activeValues[activeValues.length - 1];
+    const activeIds = [...insertions].filter((id) => !this.deletions.has(id));
+    activeIds.sort();
+    const activeId = activeIds[activeIds.length - 1];
     if (activeId) {
       return this.valueMap.get(activeId);
     }
   }
 
   delete(key:K) {
-    const insertions = this.insertions.getSources(key);
-    const activeValues = [...insertions].filter((id) => !this.deletions.has(id));
-    activeValues.sort();
-    let value;
-    const activeId = activeValues[activeValues.length - 1];
-    if (activeId) {
-      value = this.valueMap.get(activeId);
-    }
-    for (const id of insertions) {
-      this.deletions.add(id);
-      this.queue.push([id]);
-    }
+    const activeIds = this.activeIds(key);
+    const queue = activeIds.map((id) => [id]);
+    this.process(queue, true);
+    this.queue = this.queue.concat(queue);
     this.dequeue();
-    if (value) {
-      this.emit('delete', key, value);
-    }
   }
 
-  activeId(key:V) {
+  activeIds(key:K) {
     const insertions = this.insertions.getSources(key);
-    const activeValues = [...insertions].filter((id) => !this.deletions.has(id));
-    activeValues.sort();
-    return activeValues[activeValues.length - 1];
+    return [...insertions].filter((id) => !this.deletions.has(id));
+  }
+
+  activeId(key:K) {
+    const activeIds = this.activeIds(key);
+    activeIds.sort();
+    return activeIds[activeIds.length - 1];
   }
 
   clear() {

@@ -63,6 +63,7 @@
   "dependencies": {
     "directed-graph-map": "^1.2.3",
     "json-stringify-deterministic": "^1.0.1",
-    "murmur-hash": "^1.0.0"
+    "murmur-hash": "^1.0.0",
+    "node-rsa": "^0.4.2"
   }
 }

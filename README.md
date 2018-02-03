@@ -61,8 +61,8 @@ bob.get('a'); // 1
 #### Table of Contents
 
 -   [ObservedRemoveSet](#observedremoveset)
-    -   [dump](#dump)
     -   [sync](#sync)
+    -   [dump](#dump)
     -   [process](#process)
 
 ### ObservedRemoveSet
@@ -79,17 +79,21 @@ See: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_O
 -   `entries` **Iterable&lt;T>** 
 -   `options` **Options**  (optional, default `{}`)
 
+#### sync
+
+Emit a 'publish' event containing a specified queue or all of the set's insertions and deletions.
+
+**Parameters**
+
+-   `queue` **QueueType**  (optional, default `this.dump()`)
+
+Returns **void** 
+
 #### dump
 
 Return an array containing all of the set's insertions and deletions.
 
 Returns **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>>** 
-
-#### sync
-
-Emit a 'publish' event containing all of the set's insertions and deletions.
-
-Returns **void** 
 
 #### process
 
@@ -98,6 +102,7 @@ Process an array of insertion and deletions.
 **Parameters**
 
 -   `queue` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>>** Array of insertions and deletions
+-   `skipFlush` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)**  (optional, default `false`)
 
 Returns **void** 
 
@@ -145,5 +150,6 @@ Process an array of insertion and deletions.
 **Parameters**
 
 -   `queue` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>>** Array of insertions and deletions
+-   `skipFlush` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)**  (optional, default `false`)
 
 Returns **void** 

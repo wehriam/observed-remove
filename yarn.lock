@@ -268,7 +268,7 @@ asap@~2.0.3:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/asap/-/asap-2.0.6.tgz#e50347611d7e690943208bbdafebcbc2fb866d46"
 
-asn1@~0.2.3:
+asn1@0.2.3, asn1@~0.2.3:
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/asn1/-/asn1-0.2.3.tgz#dac8787713c9966849fc8180777ebe9c1ddf3b86"
 
@@ -4030,6 +4030,12 @@ node-pre-gyp@^0.6.39:
     semver "^5.3.0"
     tar "^2.2.1"
     tar-pack "^3.4.0"
+
+node-rsa@^0.4.2:
+  version "0.4.2"
+  resolved "https://registry.yarnpkg.com/node-rsa/-/node-rsa-0.4.2.tgz#d6391729ec16a830ed5a38042b3157d2d5d72530"
+  dependencies:
+    asn1 "0.2.3"
 
 nopt@^4.0.1:
   version "4.0.1"
