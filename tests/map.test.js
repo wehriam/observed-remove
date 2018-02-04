@@ -132,13 +132,15 @@ describe('Map', () => {
     expect(map.size).toEqual(3);
     map.clear();
     expect(map.size).toEqual(0);
-    expect(map.queue.length).toEqual(0);
+    expect(map.insertQueue.length).toEqual(0);
+    expect(map.deleteQueue.length).toEqual(0);
     expect(map.valueMap.size).toEqual(3);
     expect(map.deletions.size).toEqual(3);
     expect(map.insertions.size).toEqual(3);
     map.flush();
     expect(map.size).toEqual(0);
-    expect(map.queue.length).toEqual(0);
+    expect(map.insertQueue.length).toEqual(0);
+    expect(map.deleteQueue.length).toEqual(0);
     expect(map.valueMap.size).toEqual(0);
     expect(map.deletions.size).toEqual(0);
     expect(map.insertions.size).toEqual(0);

@@ -5,8 +5,6 @@ const ObservedRemoveMap = require('./map');
 const getVerifier = require('./verifier');
 const { InvalidSignatureError } = require('./signed-error');
 
-                                   
-
                 
                  
                            
@@ -49,47 +47,46 @@ class SignedObservedRemoveMap       extends ObservedRemoveMap       {
     }
   }
 
-  dump() {
-    const queue = super.dump();
-    return queue.map(([id, pair]) => {
-      if (pair) {
-        return [this.insertionSignatureMap.get(id), id, pair];
-      }
-      return [this.deletionSignatureMap.get(id), id];
-    });
+  dump()                      {
+    const [insertQueue, deleteQueue] = super.dump();
+    const signedInsertQueue = insertQueue.map(([id, pair]) => [this.insertionSignatureMap.get(id), id, pair]);
+    const signedDeleteQueue = deleteQueue.map((id) => [this.deletionSignatureMap.get(id), id]);
+    const queue = [signedInsertQueue, signedDeleteQueue];
+    return queue;
   }
 
-  process(signedQueue           , skipFlush           = false) {
-    const queue = signedQueue.map((item) => {
-      const [signature, id, pair] = item;
-      if (pair) {
-        const [key, value] = pair;
-        if (!this.verify(signature, key, value, id)) {
-          throw new InvalidSignatureError(`Signature does not match for value ${stringify(value)}`);
-        }
-        this.insertionSignatureMap.set(id, signature);
-        return [id, pair];
+  process(signedQueue                     , skipFlush           = false) {
+    const [signedInsertQueue, signedDeleteQueue] = signedQueue;
+    const insertQueue = signedInsertQueue.map(([signature, id, pair]) => {
+      const [key, value] = pair;
+      if (!this.verify(signature, key, value, id)) {
+        throw new InvalidSignatureError(`Signature does not match for key "${key}" with value ${stringify(value)}`);
       }
+      this.insertionSignatureMap.set(id, signature);
+      return [id, pair];
+    });
+    const deleteQueue = signedDeleteQueue.map(([signature, id]) => {
       if (!this.verify(signature, id)) {
         throw new InvalidSignatureError(`Signature does not match for id ${stringify(id)}`);
       }
       this.deletionSignatureMap.set(id, signature);
-      return [id];
+      return id;
     });
+    const queue                                          = [insertQueue, deleteQueue];
     super.process(queue, skipFlush);
   }
 
   setSigned(key  , value  , id       , signature       ) {
     const message = [signature, id, [key, value]];
-    this.process([message], true);
-    this.queue.push(message);
+    this.process([[message], []], true);
+    this.insertQueue.push(message);
     this.dequeue();
   }
 
   deleteSignedId(id       , signature       ) {
     const message = [signature, id];
-    this.process([message], true);
-    this.queue.push(message);
+    this.process([[], [message]], true);
+    this.deleteQueue.push(message);
     this.dequeue();
   }
 

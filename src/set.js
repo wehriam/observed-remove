@@ -11,8 +11,6 @@ type Options = {
   bufferPublishing?:number
 };
 
-type QueueType = Array<Array<any>>;
-
 /**
  * Class representing an observed-remove set
  *
@@ -25,7 +23,8 @@ class ObservedRemoveSet<T> extends EventEmitter {
   valueMap: Map<string, T>;
   insertions: DirectedGraphMap;
   deletions: Set<string>;
-  queue: QueueType;
+  deleteQueue: Array<*>;
+  insertQueue: Array<*>;
   publishTimeout: null | TimeoutID;
 
   /**
@@ -42,7 +41,8 @@ class ObservedRemoveSet<T> extends EventEmitter {
     this.valueMap = new Map();
     this.insertions = new DirectedGraphMap();
     this.deletions = new Set();
-    this.queue = [];
+    this.deleteQueue = [];
+    this.insertQueue = [];
     this.publishTimeout = null;
     if (!entries) {
       return;
@@ -71,9 +71,11 @@ class ObservedRemoveSet<T> extends EventEmitter {
 
   publish() {
     this.publishTimeout = null;
-    const queue = this.queue;
-    this.queue = [];
-    this.sync(queue);
+    const insertQueue = this.insertQueue;
+    const deleteQueue = this.deleteQueue;
+    this.insertQueue = [];
+    this.deleteQueue = [];
+    this.sync([insertQueue, deleteQueue]);
   }
 
   /**
@@ -81,7 +83,7 @@ class ObservedRemoveSet<T> extends EventEmitter {
    * @param {Array<Array<any>>} queue - Array of insertions and deletions
    * @return {void}
    */
-  sync(queue?: QueueType = this.dump()) {
+  sync(queue?: [Array<*>, Array<*>] = this.dump()) {
     this.emit('publish', queue);
   }
 
@@ -113,16 +115,18 @@ class ObservedRemoveSet<T> extends EventEmitter {
 
   /**
    * Return an array containing all of the set's insertions and deletions.
-   * @return {Array<Array<any>>}
+   * @return {[Array<*>, Array<*>]>}
    */
-  dump() {
-    const queue = [...this.deletions].map((id) => [id]);
+  dump():[Array<*>, Array<*>] {
+    const deleteQueue = [...this.deletions];
+    const insertQueue = [];
     for (const [id, hash] of this.insertions.edges) {
       const value = this.valueMap.get(hash);
       if (typeof value !== 'undefined') {
-        queue.push([id, value]);
+        insertQueue.push([id, value]);
       }
     }
+    const queue = [insertQueue, deleteQueue];
     return queue;
   }
 
@@ -131,19 +135,14 @@ class ObservedRemoveSet<T> extends EventEmitter {
    * @param {Array<Array<any>>} queue - Array of insertions and deletions
    * @return {void}
    */
-  process(queue: QueueType, skipFlush?: boolean = false) {
-    const queueWithHashes = queue.map(([id:string, value:any]) => {
-      if (value && id) {
-        const hash = this.hash(value);
-        return [id, value, hash];
-      }
-      return [id];
+  process(queue:[Array<*>, Array<*>], skipFlush?: boolean = false) {
+    const [insertQueue, deleteQueue] = queue;
+    const insertQueueWithHashes = insertQueue.map(([id, value]) => {
+      const hash = this.hash(value);
+      return [id, value, hash];
     });
     const notifications:Map<string, number> = new Map();
-    for (const [id:string, value:any, hash:string] of queueWithHashes) { // eslint-disable-line no-unused-vars
-      if (!value) {
-        continue;
-      }
+    for (const [id, value, hash] of insertQueueWithHashes) { // eslint-disable-line no-unused-vars
       const insertions = this.insertions.getSources(hash);
       const hasValue = [...insertions].filter((id2) => !this.deletions.has(id2)).length > 0;
       if (!hasValue) {
@@ -151,27 +150,21 @@ class ObservedRemoveSet<T> extends EventEmitter {
         notifications.set(hash, x + 1);
       }
     }
-    for (const [id:string, value:any, hash:string] of queueWithHashes) {
+    for (const [id, value, hash] of insertQueueWithHashes) {
       if (!value) {
         continue;
       }
       this.valueMap.set(hash, value);
       this.insertions.addEdge(id, hash);
     }
-    for (const [id:string, value:any] of queueWithHashes) {
-      if (value) {
-        continue;
-      }
+    for (const id of deleteQueue) {
       const hashes = this.insertions.getTargets(id);
       hashes.forEach((hash) => {
         const x = notifications.get(hash) || 0;
         notifications.set(hash, x - 1);
       });
     }
-    for (const [id:string, value:any] of queueWithHashes) {
-      if (value) {
-        continue;
-      }
+    for (const id of deleteQueue) {
       this.deletions.add(id);
     }
     for (const [hash, x] of notifications) {
@@ -194,8 +187,8 @@ class ObservedRemoveSet<T> extends EventEmitter {
 
   add(value:T, id?:string = generateId()) {
     const message = [id, value];
-    this.process([message], true);
-    this.queue.push(message);
+    this.process([[message], []], true);
+    this.insertQueue.push(message);
     this.dequeue();
   }
 
@@ -207,9 +200,8 @@ class ObservedRemoveSet<T> extends EventEmitter {
 
   delete(value:T) {
     const activeIds = this.activeIds(value);
-    const queue = activeIds.map((id) => [id]);
-    this.process(queue, true);
-    this.queue = this.queue.concat(queue);
+    this.process([[], activeIds], true);
+    this.deleteQueue = this.deleteQueue.concat(activeIds);
     this.dequeue();
   }
 
@@ -260,7 +252,7 @@ class ObservedRemoveSet<T> extends EventEmitter {
     return this.nativeSet().values();
   }
 
-  hash(value:T) {
+  hash(value:T):string {
     const stringified = stringify(value);
     return murmurHash3.x64.hash128(stringified);
   }

@@ -9,8 +9,6 @@ const generateId = require('./generate-id');
                           
   
 
-                                   
-
 /**
  * Class representing a Observed Remove Map
  *
@@ -24,7 +22,8 @@ class ObservedRemoveMap       extends EventEmitter {
                          
                                
                          
-                   
+                        
+                        
                                    
 
   /**
@@ -41,7 +40,8 @@ class ObservedRemoveMap       extends EventEmitter {
     this.valueMap = new Map();
     this.insertions = new DirectedGraphMap();
     this.deletions = new Set();
-    this.queue = [];
+    this.insertQueue = [];
+    this.deleteQueue = [];
     this.publishTimeout = null;
     if (!entries) {
       return;
@@ -70,9 +70,11 @@ class ObservedRemoveMap       extends EventEmitter {
 
   publish() {
     this.publishTimeout = null;
-    const queue = this.queue;
-    this.queue = [];
-    this.emit('publish', queue);
+    const insertQueue = this.insertQueue;
+    const deleteQueue = this.deleteQueue;
+    this.insertQueue = [];
+    this.deleteQueue = [];
+    this.sync([insertQueue, deleteQueue]);
   }
 
   flush() {
@@ -99,16 +101,18 @@ class ObservedRemoveMap       extends EventEmitter {
 
   /**
    * Return an array containing all of the map's insertions and deletions.
-   * @return {Array<Array<any>>}
+   * @return {[Array<*>, Array<*>]>}
    */
-  dump() {
-    const queue = [...this.deletions].map((id) => [id]);
+  dump()                      {
+    const deleteQueue = [...this.deletions];
+    const insertQueue = [];
     for (const [id, key] of this.insertions.edges) {
       const value = this.valueMap.get(id);
       if (typeof value !== 'undefined') {
-        queue.push([id, [key, value]]);
+        insertQueue.push([id, [key, value]]);
       }
     }
+    const queue = [insertQueue, deleteQueue];
     return queue;
   }
 
@@ -117,7 +121,7 @@ class ObservedRemoveMap       extends EventEmitter {
    * @param {Array<Array<any>>} queue - Array of insertions and deletions
    * @return {void}
    */
-  sync(queue             = this.dump()) {
+  sync(queue                        = this.dump()) {
     this.emit('publish', queue);
   }
 
@@ -126,22 +130,25 @@ class ObservedRemoveMap       extends EventEmitter {
    * @param {Array<Array<any>>} queue - Array of insertions and deletions
    * @return {void}
    */
-  process(queue           , skipFlush           = false) {
+  process(queue                     , skipFlush           = false) {
+    const [insertQueue, deleteQueue] = queue;
     let keys = new Set();
-    for (const [id       ] of queue) {
+    for (const id of deleteQueue) {
+      keys = new Set([...keys, ...this.insertions.getTargets(id)]);
+    }
+    for (const [id] of insertQueue) {
       keys = new Set([...keys, ...this.insertions.getTargets(id)]);
     }
     const keyMap = new Map([...keys].map((key) => [key, this.activeId(key)]));
     const newKeys = new Set();
-    for (const [id       , tuple               ] of queue) {
-      if (tuple && id) {
-        const [key, value] = tuple;
-        this.valueMap.set(id, value);
-        this.insertions.addEdge(id, key);
-        newKeys.add(key);
-      } else if (id) {
-        this.deletions.add(id);
-      }
+    for (const [id, tuple] of insertQueue) {
+      const [key, value] = tuple;
+      this.valueMap.set(id, value);
+      this.insertions.addEdge(id, key);
+      newKeys.add(key);
+    }
+    for (const id of deleteQueue) {
+      this.deletions.add(id);
     }
     const newKeyMap = new Map([...newKeys].map((key) => [key, this.activeId(key)]));
     for (const [key, oldId] of keyMap) {
@@ -173,8 +180,8 @@ class ObservedRemoveMap       extends EventEmitter {
 
   set(key  , value  , id          = generateId()) {
     const message = [id, [key, value]];
-    this.process([message], true);
-    this.queue.push(message);
+    this.process([[message], []], true);
+    this.insertQueue.push(message);
     this.dequeue();
   }
 
@@ -190,9 +197,8 @@ class ObservedRemoveMap       extends EventEmitter {
 
   delete(key  ) {
     const activeIds = this.activeIds(key);
-    const queue = activeIds.map((id) => [id]);
-    this.process(queue, true);
-    this.queue = this.queue.concat(queue);
+    this.process([[], activeIds], true);
+    this.deleteQueue = this.deleteQueue.concat(activeIds);
     this.dequeue();
   }
 
