@@ -33,7 +33,7 @@ class SignedObservedRemoveSet    extends ObservedRemoveSet    {
                                             
                                              
 
-  flush() {
+  flush()      {
     super.flush();
     for (const [id] of this.insertionSignatureMap) {
       if (this.insertions.getTargets(id).size === 0) {
@@ -59,7 +59,7 @@ class SignedObservedRemoveSet    extends ObservedRemoveSet    {
     return queue;
   }
 
-  process(signedQueue                     , skipFlush           = false) {
+  process(signedQueue                     , skipFlush           = false)      {
     const [signedInsertQueue, signedDeleteQueue] = signedQueue;
     const insertQueue = signedInsertQueue.map(([signature, id, value]) => {
       if (!this.verify(signature, value, id)) {
@@ -84,16 +84,17 @@ class SignedObservedRemoveSet    extends ObservedRemoveSet    {
     this.process([[message], []], true);
     this.insertQueue.push(message);
     this.dequeue();
+    return this;
   }
 
-  deleteSignedId(id       , signature       ) {
+  deleteSignedId(id       , signature       )      {
     const message = [signature, id];
     this.process([[], [message]], true);
     this.deleteQueue.push(message);
     this.dequeue();
   }
 
-  clear() {
+  clear()      {
     throw new Error('Unsupported method clear()');
   }
 

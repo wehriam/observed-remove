@@ -153,7 +153,7 @@ class ObservedRemoveMap       extends EventEmitter {
     const newKeyMap = new Map([...newKeys].map((key) => [key, this.activeId(key)]));
     for (const [key, oldId] of keyMap) {
       const newId = newKeyMap.get(key);
-      if (!newId) {
+      if (oldId && !newId) {
         const value = this.valueMap.get(oldId);
         if (value) {
           this.emit('delete', key, value);
@@ -166,7 +166,7 @@ class ObservedRemoveMap       extends EventEmitter {
       }
     }
     for (const [key, newId] of newKeyMap) {
-      if (!keyMap.get(key)) {
+      if (newId && !keyMap.get(key)) {
         const value = this.valueMap.get(newId);
         if (value) {
           this.emit('set', key, value);
@@ -183,9 +183,10 @@ class ObservedRemoveMap       extends EventEmitter {
     this.process([[message], []], true);
     this.insertQueue.push(message);
     this.dequeue();
+    return this;
   }
 
-  get(key  ) { // eslint-disable-line consistent-return
+  get(key  )           { // eslint-disable-line consistent-return
     const insertions = this.insertions.getSources(key);
     const activeIds = [...insertions].filter((id) => !this.deletions.has(id));
     activeIds.sort();
@@ -195,25 +196,25 @@ class ObservedRemoveMap       extends EventEmitter {
     }
   }
 
-  delete(key  ) {
+  delete(key  )      {
     const activeIds = this.activeIds(key);
     this.process([[], activeIds], true);
     this.deleteQueue = this.deleteQueue.concat(activeIds);
     this.dequeue();
   }
 
-  activeIds(key  ) {
+  activeIds(key  )               {
     const insertions = this.insertions.getSources(key);
     return [...insertions].filter((id) => !this.deletions.has(id));
   }
 
-  activeId(key  ) {
+  activeId(key  )               {
     const activeIds = this.activeIds(key);
     activeIds.sort();
     return activeIds[activeIds.length - 1];
   }
 
-  clear() {
+  clear()       {
     for (const key of this.keys()) {
       this.delete(key);
     }
@@ -240,7 +241,7 @@ class ObservedRemoveMap       extends EventEmitter {
     return this.nativeMap().entries();
   }
 
-  forEach(callback         , thisArg     ) {
+  forEach(callback         , thisArg     )      {
     if (thisArg) {
       for (const [key, value] of this.entries()) {
         callback.bind(thisArg)(value, key, this);
@@ -252,7 +253,7 @@ class ObservedRemoveMap       extends EventEmitter {
     }
   }
 
-  has(key  ) {
+  has(key  )          {
     const insertions = this.insertions.getSources(key);
     return [...insertions].filter((id) => !this.deletions.has(id)).length > 0;
   }

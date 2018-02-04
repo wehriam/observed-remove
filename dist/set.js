@@ -190,6 +190,7 @@ class ObservedRemoveSet    extends EventEmitter {
     this.process([[message], []], true);
     this.insertQueue.push(message);
     this.dequeue();
+    return this;
   }
 
   activeIds(value  ) {
@@ -244,8 +245,12 @@ class ObservedRemoveSet    extends EventEmitter {
     }
   }
 
-  has(value  ) {
+  has(value  )         {
     return this.activeIds(value).length > 0;
+  }
+
+  keys()             {
+    return this.nativeSet().values();
   }
 
   values()             {

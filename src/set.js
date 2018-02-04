@@ -190,6 +190,7 @@ class ObservedRemoveSet<T> extends EventEmitter {
     this.process([[message], []], true);
     this.insertQueue.push(message);
     this.dequeue();
+    return this;
   }
 
   activeIds(value:T) {
@@ -228,7 +229,7 @@ class ObservedRemoveSet<T> extends EventEmitter {
     return new Set(values.values());
   }
 
-  entries():Iterable<[T, T]> {
+  entries():Iterator<[T, T]> {
     return this.nativeSet().entries();
   }
 
@@ -244,11 +245,15 @@ class ObservedRemoveSet<T> extends EventEmitter {
     }
   }
 
-  has(value:T) {
+  has(value:T):boolean {
     return this.activeIds(value).length > 0;
   }
 
-  values():Iterable<T> {
+  keys():Iterator<T> {
+    return this.nativeSet().values();
+  }
+
+  values():Iterator<T> {
     return this.nativeSet().values();
   }
 

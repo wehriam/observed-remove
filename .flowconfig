@@ -9,3 +9,5 @@
 flow/
 
 [options]
+
+traces=5

@@ -33,7 +33,7 @@ class SignedObservedRemoveMap       extends ObservedRemoveMap       {
                                             
                                              
 
-  flush() {
+  flush()      {
     super.flush();
     for (const [id] of this.insertionSignatureMap) {
       if (this.insertions.getTargets(id).size === 0) {
@@ -55,7 +55,7 @@ class SignedObservedRemoveMap       extends ObservedRemoveMap       {
     return queue;
   }
 
-  process(signedQueue                     , skipFlush           = false) {
+  process(signedQueue                     , skipFlush           = false)      {
     const [signedInsertQueue, signedDeleteQueue] = signedQueue;
     const insertQueue = signedInsertQueue.map(([signature, id, pair]) => {
       const [key, value] = pair;
@@ -81,9 +81,10 @@ class SignedObservedRemoveMap       extends ObservedRemoveMap       {
     this.process([[message], []], true);
     this.insertQueue.push(message);
     this.dequeue();
+    return this;
   }
 
-  deleteSignedId(id       , signature       ) {
+  deleteSignedId(id       , signature       )      {
     const message = [signature, id];
     this.process([[], [message]], true);
     this.deleteQueue.push(message);

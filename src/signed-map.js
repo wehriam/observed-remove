@@ -33,7 +33,7 @@ class SignedObservedRemoveMap<K, V> extends ObservedRemoveMap<K, V> {
   deletionSignatureMap: Map<string, string>;
   verify: (string, ...Array<any>) => boolean;
 
-  flush() {
+  flush():void {
     super.flush();
     for (const [id] of this.insertionSignatureMap) {
       if (this.insertions.getTargets(id).size === 0) {
@@ -55,7 +55,7 @@ class SignedObservedRemoveMap<K, V> extends ObservedRemoveMap<K, V> {
     return queue;
   }
 
-  process(signedQueue:[Array<*>, Array<*>], skipFlush?: boolean = false) {
+  process(signedQueue:[Array<*>, Array<*>], skipFlush?: boolean = false):void {
     const [signedInsertQueue, signedDeleteQueue] = signedQueue;
     const insertQueue = signedInsertQueue.map(([signature, id, pair]) => {
       const [key, value] = pair;
@@ -81,9 +81,10 @@ class SignedObservedRemoveMap<K, V> extends ObservedRemoveMap<K, V> {
     this.process([[message], []], true);
     this.insertQueue.push(message);
     this.dequeue();
+    return this;
   }
 
-  deleteSignedId(id:string, signature:string) {
+  deleteSignedId(id:string, signature:string):void {
     const message = [signature, id];
     this.process([[], [message]], true);
     this.deleteQueue.push(message);
