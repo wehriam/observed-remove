@@ -61,9 +61,12 @@ bob.get('a'); // 1
 #### Table of Contents
 
 -   [ObservedRemoveSet](#observedremoveset)
+    -   [Parameters](#parameters)
     -   [sync](#sync)
+        -   [Parameters](#parameters-1)
     -   [dump](#dump)
     -   [process](#process)
+        -   [Parameters](#parameters-2)
 
 ### ObservedRemoveSet
 
@@ -74,16 +77,16 @@ Class representing an observed-remove set
 Implements all methods and iterators of the native `Set` object in addition to the following.
 See: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set>
 
-**Parameters**
+#### Parameters
 
--   `entries` **Iterable&lt;T>** 
--   `options` **Options**  (optional, default `{}`)
+-   `entries` **Iterable&lt;T>** Iterable of initial values (optional, default `[]`)
+-   `options` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)**  (optional, default `{}`)
 
 #### sync
 
 Emit a 'publish' event containing a specified queue or all of the set's insertions and deletions.
 
-**Parameters**
+##### Parameters
 
 -   `queue` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>>** Array of insertions and deletions (optional, default `this.dump()`)
 
@@ -99,7 +102,7 @@ Returns **\[[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/
 
 Process an array of insertion and deletions.
 
-**Parameters**
+##### Parameters
 
 -   `queue` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>>** Array of insertions and deletions
 -   `skipFlush` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)**  (optional, default `false`)
@@ -113,9 +116,12 @@ Returns **void**
 #### Table of Contents
 
 -   [ObservedRemoveMap](#observedremovemap)
+    -   [Parameters](#parameters)
     -   [dump](#dump)
     -   [sync](#sync)
+        -   [Parameters](#parameters-1)
     -   [process](#process)
+        -   [Parameters](#parameters-2)
 
 ### ObservedRemoveMap
 
@@ -126,10 +132,10 @@ Class representing a Observed Remove Map
 Implements all methods and iterators of the native `Map` object in addition to the following.
 See: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map>
 
-**Parameters**
+#### Parameters
 
--   `entries` **Iterable&lt;\[K, V]>** 
--   `options` **Options**  (optional, default `{}`)
+-   `entries` **Iterable&lt;K, V>** Iterable of initial values (optional, default `[]`)
+-   `options` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)**  (optional, default `{}`)
 
 #### dump
 
@@ -141,7 +147,7 @@ Returns **\[[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/
 
 Emit a 'publish' event containing a specified queue or all of the set's insertions and deletions.
 
-**Parameters**
+##### Parameters
 
 -   `queue` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>>** Array of insertions and deletions (optional, default `this.dump()`)
 
@@ -151,7 +157,7 @@ Returns **void**
 
 Process an array of insertion and deletions.
 
-**Parameters**
+##### Parameters
 
 -   `queue` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>>** Array of insertions and deletions
 -   `skipFlush` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)**  (optional, default `false`)
