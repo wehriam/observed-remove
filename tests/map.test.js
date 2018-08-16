@@ -134,18 +134,13 @@ describe('Map', () => {
     expect(map.size).toEqual(0);
     expect(map.insertQueue.length).toEqual(0);
     expect(map.deleteQueue.length).toEqual(0);
-    expect(map.valueMap.size).toEqual(3);
     expect(map.deletions.size).toEqual(3);
-    expect(map.insertions.size).toEqual(3);
     map.flush();
     expect(map.size).toEqual(0);
     expect(map.insertQueue.length).toEqual(0);
     expect(map.deleteQueue.length).toEqual(0);
-    expect(map.valueMap.size).toEqual(0);
     expect(map.deletions.size).toEqual(0);
-    expect(map.insertions.size).toEqual(0);
   });
-
 
   test('Synchronize maps', async () => {
     const keyX = uuid.v4();
@@ -200,7 +195,7 @@ describe('Map', () => {
     expect([...bob]).toEqual([]);
   });
 
-  test('Flush values', async () => {
+  test('Flush deletions', async () => {
     const keyX = uuid.v4();
     const keyY = uuid.v4();
     const keyZ = uuid.v4();
@@ -212,35 +207,11 @@ describe('Map', () => {
     map.delete(keyY);
     map.delete(keyZ);
     expect(map.deletions.size).toEqual(3);
-    expect(map.insertions.size).toEqual(3);
     map.flush();
     expect(map.deletions.size).toEqual(3);
-    expect(map.insertions.size).toEqual(3);
     await new Promise((resolve) => setTimeout(resolve, 200));
     map.flush();
     expect(map.deletions.size).toEqual(0);
-    expect(map.insertions.size).toEqual(0);
-  });
-
-  test('Flush sets', async () => {
-    const keyX = uuid.v4();
-    const keyY = uuid.v4();
-    const keyZ = uuid.v4();
-    const valueX = generateValue();
-    const valueY = generateValue();
-    const valueZ = generateValue();
-    const map = new ObservedRemoveMap([[keyX, valueX], [keyY, valueY], [keyZ, valueZ]]);
-    map.flush();
-    expect(map.deletions.size).toEqual(0);
-    expect(map.insertions.size).toEqual(3);
-    map.set(keyX, valueX);
-    map.set(keyY, valueY);
-    map.set(keyZ, valueZ);
-    expect(map.deletions.size).toEqual(0);
-    expect(map.insertions.size).toEqual(6);
-    map.flush();
-    expect(map.deletions.size).toEqual(0);
-    expect(map.insertions.size).toEqual(3);
   });
 
   test('Synchronize set and delete events', async () => {
@@ -383,8 +354,8 @@ describe('Map', () => {
     while (aliceAddCount !== 3 || bobAddCount !== 3) {
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
-    expect([...alice]).toEqual([[keyA, valueA], [keyX, valueX], [keyB, valueB], [keyY, valueY], [keyC, valueC], [keyZ, valueZ]]);
-    expect([...bob]).toEqual([[keyA, valueA], [keyX, valueX], [keyB, valueB], [keyY, valueY], [keyC, valueC], [keyZ, valueZ]]);
+    expect([...alice]).toEqual(expect.arrayContaining([[keyA, valueA], [keyX, valueX], [keyB, valueB], [keyY, valueY], [keyC, valueC], [keyZ, valueZ]]));
+    expect([...bob]).toEqual(expect.arrayContaining([[keyA, valueA], [keyX, valueX], [keyB, valueB], [keyY, valueY], [keyC, valueC], [keyZ, valueZ]]));
   });
 
   test('Key-value pairs should not repeat', async () => {
@@ -463,6 +434,32 @@ describe('Map', () => {
     }
     expect([...alice]).toEqual([]);
     expect([...bob]).toEqual([]);
+  });
+
+  test('Synchronize out of order sets', async () => {
+    const alice = new ObservedRemoveMap([]);
+    const bob = new ObservedRemoveMap([]);
+    const key = uuid.v4();
+    const value1 = generateValue();
+    const value2 = generateValue();
+    alice.set(key, value1);
+    const aliceDump1 = alice.dump();
+    alice.set(key, value2);
+    const aliceDump2 = alice.dump();
+    bob.process(aliceDump2);
+    expect(bob.get(key)).toEqual(value2);
+    bob.delete(key);
+    expect(bob.get(key)).toBeUndefined();
+    const bobDump1 = bob.dump();
+    alice.process(bobDump1);
+    expect(alice.get(key)).toBeUndefined();
+    bob.process(aliceDump1);
+    expect(alice.get(key)).toBeUndefined();
+    expect(bob.get(key)).toBeUndefined();
+    const bobDump2 = bob.dump();
+    alice.process(bobDump2);
+    expect(alice.get(key)).toBeUndefined();
+    expect(bob.get(key)).toBeUndefined();
   });
 });
 

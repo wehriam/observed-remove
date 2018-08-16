@@ -1,7 +1,6 @@
 //      
 
 const { EventEmitter } = require('events');
-const DirectedGraphMap = require('directed-graph-map');
 const generateId = require('./generate-id');
 
                 
@@ -18,31 +17,21 @@ const generateId = require('./generate-id');
 class ObservedRemoveMap       extends EventEmitter {
                  
                            
-                           
-                         
-                               
-                         
+                             
+                            
                         
                         
                                    
 
-  /**
-   * Create an observed-remove map.
-   * @param {Iterable<K, V>} [entries=[]] Iterable of initial values
-   * @param {Object} [options={}]
-   * @param {String} [options.maxAge=5000] Max age of insertion/deletion identifiers
-   * @param {String} [options.bufferPublishing=20] Interval by which to buffer 'publish' events
-   */
   constructor(entries                   , options          = {}) {
     super();
     this.maxAge = typeof options.maxAge === 'undefined' ? 5000 : options.maxAge;
     this.bufferPublishing = typeof options.bufferPublishing === 'undefined' ? 30 : options.bufferPublishing;
-    this.valueMap = new Map();
-    this.insertions = new DirectedGraphMap();
-    this.deletions = new Set();
+    this.publishTimeout = null;
+    this.pairs = new Map();
+    this.deletions = new Map();
     this.insertQueue = [];
     this.deleteQueue = [];
-    this.publishTimeout = null;
     if (!entries) {
       return;
     }
@@ -79,41 +68,12 @@ class ObservedRemoveMap       extends EventEmitter {
 
   flush() {
     const now = Date.now();
-    for (const id of this.deletions) {
+    for (const [id] of this.deletions) {
       const timestamp = parseInt(id.slice(0, 9), 36);
-      if (now - timestamp > this.maxAge) {
-        this.insertions.removeSource(id);
+      if (now - timestamp >= this.maxAge) {
         this.deletions.delete(id);
-        this.valueMap.delete(id);
       }
     }
-    for (const key of this.insertions.targets) {
-      const ids = Array.from(this.insertions.getSources(key));
-      ids.sort();
-      for (let i = 0; i < ids.length - 1; i += 1) {
-        const id = ids[i];
-        this.insertions.removeEdge(id, key);
-        this.deletions.delete(id);
-        this.valueMap.delete(id);
-      }
-    }
-  }
-
-  /**
-   * Return an array containing all of the map's insertions and deletions.
-   * @return {[Array<*>, Array<*>]>}
-   */
-  dump()                      {
-    const deleteQueue = [...this.deletions];
-    const insertQueue = [];
-    for (const [id, key] of this.insertions.edges) {
-      const value = this.valueMap.get(id);
-      if (typeof value !== 'undefined') {
-        insertQueue.push([id, [key, value]]);
-      }
-    }
-    const queue = [insertQueue, deleteQueue];
-    return queue;
   }
 
   /**
@@ -126,51 +86,31 @@ class ObservedRemoveMap       extends EventEmitter {
   }
 
   /**
-   * Process an array of insertion and deletions.
-   * @param {Array<Array<any>>} queue - Array of insertions and deletions
-   * @return {void}
+   * Return an array containing all of the map's insertions and deletions.
+   * @return {[Array<*>, Array<*>]>}
    */
+  dump()                      {
+    return [[...this.pairs], [...this.deletions]];
+  }
+
   process(queue                     , skipFlush           = false) {
-    const [insertQueue, deleteQueue] = queue;
-    let keys = new Set();
-    for (const id of deleteQueue) {
-      keys = new Set([...keys, ...this.insertions.getTargets(id)]);
-    }
-    for (const [id] of insertQueue) {
-      keys = new Set([...keys, ...this.insertions.getTargets(id)]);
-    }
-    const keyMap = new Map([...keys].map((key) => [key, this.activeId(key)]));
-    const newKeys = new Set();
-    for (const [id, tuple] of insertQueue) {
-      const [key, value] = tuple;
-      this.valueMap.set(id, value);
-      this.insertions.addEdge(id, key);
-      newKeys.add(key);
-    }
-    for (const id of deleteQueue) {
-      this.deletions.add(id);
-    }
-    const newKeyMap = new Map([...newKeys].map((key) => [key, this.activeId(key)]));
-    for (const [key, oldId] of keyMap) {
-      const newId = newKeyMap.get(key);
-      if (oldId && !newId) {
-        const value = this.valueMap.get(oldId);
-        if (value) {
-          this.emit('delete', key, value);
-        }
-      } else if (newId && (oldId !== newId)) {
-        const value = this.valueMap.get(newId);
-        if (value) {
-          this.emit('set', key, value);
-        }
+    const [insertions, deletions] = queue;
+    for (const [id, key] of deletions) {
+      const pair = this.pairs.get(key);
+      if (pair && pair[0] === id) {
+        this.pairs.delete(key);
+        this.emit('delete', key, pair[1]);
       }
+      this.deletions.set(id, key);
     }
-    for (const [key, newId] of newKeyMap) {
-      if (newId && !keyMap.get(key)) {
-        const value = this.valueMap.get(newId);
-        if (value) {
-          this.emit('set', key, value);
-        }
+    for (const [key, [id, value]] of insertions) {
+      if (this.deletions.has(id)) {
+        continue;
+      }
+      const pair = this.pairs.get(key);
+      if (!pair || (pair && pair[0] < id)) {
+        this.pairs.set(key, [id, value]);
+        this.emit('set', key, value);
       }
     }
     if (!skipFlush) {
@@ -179,39 +119,35 @@ class ObservedRemoveMap       extends EventEmitter {
   }
 
   set(key  , value  , id          = generateId()) {
-    const message = [id, [key, value]];
-    this.process([[message], []], true);
-    this.insertQueue.push(message);
+    const pair = this.pairs.get(key);
+    const insertMessage = [key, [id, value]];
+    if (pair) {
+      const deleteMessage = [pair[0], key];
+      this.process([[insertMessage], [deleteMessage]], true);
+      this.deleteQueue.push(deleteMessage);
+    } else {
+      this.process([[insertMessage], []], true);
+    }
+    this.insertQueue.push(insertMessage);
     this.dequeue();
     return this;
   }
 
   get(key  )           { // eslint-disable-line consistent-return
-    const insertions = this.insertions.getSources(key);
-    const activeIds = [...insertions].filter((id) => !this.deletions.has(id));
-    activeIds.sort();
-    const activeId = activeIds[activeIds.length - 1];
-    if (activeId) {
-      return this.valueMap.get(activeId);
+    const pair = this.pairs.get(key);
+    if (pair) {
+      return pair[1];
     }
   }
 
   delete(key  )      {
-    const activeIds = this.activeIds(key);
-    this.process([[], activeIds], true);
-    this.deleteQueue = this.deleteQueue.concat(activeIds);
-    this.dequeue();
-  }
-
-  activeIds(key  )               {
-    const insertions = this.insertions.getSources(key);
-    return [...insertions].filter((id) => !this.deletions.has(id));
-  }
-
-  activeId(key  )               {
-    const activeIds = this.activeIds(key);
-    activeIds.sort();
-    return activeIds[activeIds.length - 1];
+    const pair = this.pairs.get(key);
+    if (pair) {
+      const message = [pair[0], key];
+      this.process([[], [message]], true);
+      this.deleteQueue.push(message);
+      this.dequeue();
+    }
   }
 
   clear()       {
@@ -221,18 +157,9 @@ class ObservedRemoveMap       extends EventEmitter {
   }
 
   nativeMap()           {
-    const insertions = this.insertions.sources;
-    const ids = [...insertions].filter((id) => !this.deletions.has(id));
-    ids.sort();
     const entries           = new Map();
-    for (let i = 0; i < ids.length; i += 1) {
-      const id = ids[i];
-      const value = this.valueMap.get(id);
-      if (typeof value !== 'undefined') {
-        this.insertions.getTargets(id).forEach((key) => {
-          entries.set(key, value);
-        });
-      }
+    for (const [key, pair] of this.pairs) {
+      entries.set(key, pair[1]);
     }
     return entries;
   }
@@ -254,12 +181,11 @@ class ObservedRemoveMap       extends EventEmitter {
   }
 
   has(key  )          {
-    const insertions = this.insertions.getSources(key);
-    return [...insertions].filter((id) => !this.deletions.has(id)).length > 0;
+    return !!this.pairs.get(key);
   }
 
   keys()             {
-    return this.nativeMap().keys();
+    return this.pairs.keys();
   }
 
   values()             {
@@ -267,8 +193,7 @@ class ObservedRemoveMap       extends EventEmitter {
   }
 
   get size()        {
-    const insertions = this.insertions.sources;
-    return [...insertions].filter((id) => !this.deletions.has(id)).length;
+    return this.pairs.size;
   }
 }
 
