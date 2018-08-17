@@ -9,6 +9,8 @@ const privateKey = new NodeRSA({ b: 512 });
 const sign = getSigner(privateKey.exportKey('pkcs1-private-pem'));
 const key = privateKey.exportKey('pkcs1-public-pem');
 
+jest.setTimeout(30000);
+
 describe('Signed Set', () => {
   test('Add and delete values', () => {
     let id;
