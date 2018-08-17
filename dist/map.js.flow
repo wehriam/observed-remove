@@ -96,11 +96,6 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
   process(queue:[Array<*>, Array<*>], skipFlush?: boolean = false) {
     const [insertions, deletions] = queue;
     for (const [id, key] of deletions) {
-      const pair = this.pairs.get(key);
-      if (pair && pair[0] === id) {
-        this.pairs.delete(key);
-        this.emit('delete', key, pair[1]);
-      }
       this.deletions.set(id, key);
     }
     for (const [key, [id, value]] of insertions) {
@@ -111,6 +106,13 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
       if (!pair || (pair && pair[0] < id)) {
         this.pairs.set(key, [id, value]);
         this.emit('set', key, value);
+      }
+    }
+    for (const [id, key] of deletions) {
+      const pair = this.pairs.get(key);
+      if (pair && pair[0] === id) {
+        this.pairs.delete(key);
+        this.emit('delete', key, pair[1]);
       }
     }
     if (!skipFlush) {
