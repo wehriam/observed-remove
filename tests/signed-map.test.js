@@ -285,14 +285,14 @@ describe('Signed Map', () => {
     map.deleteSigned(keyY, idY, sign(keyY, idY));
     map.deleteSigned(keyZ, idZ, sign(keyZ, idZ));
     expect(map.deletions.size).toEqual(3);
-    expect(map.signatureMap.size).toEqual(3);
+    expect(map.deletionSignatureMap.size).toEqual(3);
     map.flush();
     expect(map.deletions.size).toEqual(3);
-    expect(map.signatureMap.size).toEqual(3);
+    expect(map.deletionSignatureMap.size).toEqual(3);
     await new Promise((resolve) => setTimeout(resolve, 200));
     map.flush();
     expect(map.deletions.size).toEqual(0);
-    expect(map.signatureMap.size).toEqual(0);
+    expect(map.deletionSignatureMap.size).toEqual(0);
   });
 
 
@@ -471,7 +471,6 @@ describe('Signed Map', () => {
     expect([...alice.values()]).toEqual([value2]);
     expect(alice.get(k)).toEqual(value2);
   });
-
 
   test('Synchronizes 100 asynchrous maps', async () => {
     const keyA = uuid.v4();

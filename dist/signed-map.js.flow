@@ -19,7 +19,8 @@ class SignedObservedRemoveMap<K, V> extends ObservedRemoveMap<K, V> {
       throw new Error('Missing required options.key parameter');
     }
     this.verify = getVerifier(options.key, options.format);
-    this.signatureMap = new Map();
+    this.insertionSignatureMap = new Map();
+    this.deletionSignatureMap = new Map();
     if (!entries) {
       return;
     }
@@ -28,20 +29,21 @@ class SignedObservedRemoveMap<K, V> extends ObservedRemoveMap<K, V> {
     }
   }
 
-  signatureMap: Map<string, string>;
+  insertionSignatureMap: Map<string, string>;
+  deletionSignatureMap: Map<string, string>;
   verify: (string, ...Array<any>) => boolean;
 
   dump():[Array<*>, Array<*>] {
     const [insertQueue, deleteQueue] = super.dump();
     const signedInsertQueue = insertQueue.map(([key, [id, value]]) => {
-      const signature = this.signatureMap.get(id);
+      const signature = this.insertionSignatureMap.get(id);
       if (!signature) {
         throw new Error(`Missing signature for insertion key "${JSON.stringify(key)}" with id "${id}" and value "${JSON.stringify(value)}"`);
       }
       return [signature, id, key, value];
     });
     const signedDeleteQueue = deleteQueue.map(([id, key]) => {
-      const signature = this.signatureMap.get(id);
+      const signature = this.deletionSignatureMap.get(id);
       if (!signature) {
         throw new Error(`Missing signature for deletion key "${JSON.stringify(key)}" with id "${id}"`);
       }
@@ -57,7 +59,7 @@ class SignedObservedRemoveMap<K, V> extends ObservedRemoveMap<K, V> {
       const timestamp = parseInt(id.slice(0, 9), 36);
       if (now - timestamp >= this.maxAge) {
         this.deletions.delete(id);
-        this.signatureMap.delete(id);
+        this.deletionSignatureMap.delete(id);
       }
     }
   }
@@ -68,14 +70,14 @@ class SignedObservedRemoveMap<K, V> extends ObservedRemoveMap<K, V> {
       if (!this.verify(signature, key, value, id)) {
         throw new InvalidSignatureError(`Signature does not match for key "${key}" with value ${stringify(value)}`);
       }
-      this.signatureMap.set(id, signature);
+      this.insertionSignatureMap.set(id, signature);
       return [key, [id, value]];
     });
     const deleteQueue = signedDeleteQueue.map(([signature, id, key]) => {
       if (!this.verify(signature, key, id)) {
         throw new InvalidSignatureError(`Signature does not match for id ${stringify(id)}`);
       }
-      this.signatureMap.set(id, signature);
+      this.deletionSignatureMap.set(id, signature);
       return [id, key];
     });
     const queue:[Array<[K, [string, V]]>, Array<[string, K]>] = [insertQueue, deleteQueue];
@@ -83,7 +85,7 @@ class SignedObservedRemoveMap<K, V> extends ObservedRemoveMap<K, V> {
     for (const [signature, id, key] of signedInsertQueue) { // eslint-disable-line no-unused-vars
       const pair = this.pairs.get(key);
       if (!pair || pair[0] !== id) {
-        this.signatureMap.delete(id);
+        this.insertionSignatureMap.delete(id);
       }
     }
   }
