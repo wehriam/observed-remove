@@ -115,16 +115,12 @@ describe('Set', () => {
     expect(set.size).toEqual(0);
     expect(set.insertQueue.length).toEqual(0);
     expect(set.deleteQueue.length).toEqual(0);
-    expect(set.valueMap.size).toEqual(3);
     expect(set.deletions.size).toEqual(3);
-    expect(set.insertions.size).toEqual(3);
     set.flush();
     expect(set.size).toEqual(0);
     expect(set.insertQueue.length).toEqual(0);
     expect(set.deleteQueue.length).toEqual(0);
-    expect(set.valueMap.size).toEqual(0);
     expect(set.deletions.size).toEqual(0);
-    expect(set.insertions.size).toEqual(0);
   });
 
   test('Synchronize sets', async () => {
@@ -174,32 +170,45 @@ describe('Set', () => {
     set.delete(Y);
     set.delete(Z);
     expect(set.deletions.size).toEqual(3);
-    expect(set.insertions.size).toEqual(3);
     set.flush();
     expect(set.deletions.size).toEqual(3);
-    expect(set.insertions.size).toEqual(3);
     await new Promise((resolve) => setTimeout(resolve, 200));
     set.flush();
     expect(set.deletions.size).toEqual(0);
-    expect(set.insertions.size).toEqual(0);
   });
 
-  test('Flush adds', async () => {
+  test('Flush deletions from add events', async () => {
     const X = generateValue();
     const Y = generateValue();
     const Z = generateValue();
-    const set = new ObservedRemoveSet([X, Y, Z]);
+    const set = new ObservedRemoveSet([X, Y, Z], { maxAge: 100 });
     set.flush();
     expect(set.deletions.size).toEqual(0);
-    expect(set.insertions.size).toEqual(3);
     set.add(X);
     set.add(Y);
     set.add(Z);
-    expect(set.deletions.size).toEqual(0);
-    expect(set.insertions.size).toEqual(6);
+    expect(set.deletions.size).toEqual(3);
+    await new Promise((resolve) => setTimeout(resolve, 200));
     set.flush();
     expect(set.deletions.size).toEqual(0);
-    expect(set.insertions.size).toEqual(3);
+  });
+
+  test('Only send out delete events when values have changed', async () => {
+    const X = generateValue();
+    const set = new ObservedRemoveSet([X], { maxAge: 100 });
+    const deletePromise = new Promise((resolve, reject) => {
+      const handleDelete = () => {
+        clearTimeout(timeout);
+        reject(new Error('Delete event should not be trigged on add'));
+      };
+      const timeout = setTimeout(() => {
+        set.removeListener('delete', handleDelete);
+        resolve();
+      }, 200);
+      set.on('delete', handleDelete);
+    });
+    set.add(X);
+    await deletePromise;
   });
 
   test('Synchronize add and delete events', async () => {
@@ -328,8 +337,8 @@ describe('Set', () => {
     while (aliceAddCount !== 3 || bobAddCount !== 3) {
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
-    expect([...alice]).toEqual([A, X, B, Y, C, Z]);
-    expect([...bob]).toEqual([A, X, B, Y, C, Z]);
+    expect(new Set([...alice])).toEqual(new Set([A, X, B, Y, C, Z]));
+    expect(new Set([...bob])).toEqual(new Set([A, X, B, Y, C, Z]));
   });
 
   test('Values should not repeat', async () => {

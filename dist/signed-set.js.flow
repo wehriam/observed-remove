@@ -33,54 +33,70 @@ class SignedObservedRemoveSet<T> extends ObservedRemoveSet<T> {
   deletionSignatureMap: Map<string, string>;
   verify: (string, ...Array<any>) => boolean;
 
-  flush():void {
-    super.flush();
-    for (const [id] of this.insertionSignatureMap) {
-      if (this.insertions.getTargets(id).size === 0) {
-        this.insertionSignatureMap.delete(id);
-      }
-    }
-    for (const [id] of this.deletionSignatureMap) {
-      if (!this.deletions.has(id)) {
-        this.deletionSignatureMap.delete(id);
-      }
-    }
-  }
-
   /**
    * Return an array containing all of the set's insertions and deletions.
    * @return {Array<Array<any>>}
    */
   dump():[Array<*>, Array<*>] {
     const [insertQueue, deleteQueue] = super.dump();
-    const signedInsertQueue = insertQueue.map(([id, value]) => [this.insertionSignatureMap.get(id), id, value]);
-    const signedDeleteQueue = deleteQueue.map((id) => [this.deletionSignatureMap.get(id), id]);
+    const signedInsertQueue = insertQueue.map(([hash, [id, value]]) => {
+      const signature = this.insertionSignatureMap.get(id);
+      if (!signature) {
+        throw new Error(`Missing signature for insertion with id "${id}" and value "${JSON.stringify(value)}"`);
+      }
+      return [signature, id, hash, value];
+    });
+    const signedDeleteQueue = deleteQueue.map(([id, hash]) => {
+      const signature = this.deletionSignatureMap.get(id);
+      if (!signature) {
+        throw new Error(`Missing signature for deletion with id "${id}"`);
+      }
+      return [signature, id, hash];
+    });
     const queue = [signedInsertQueue, signedDeleteQueue];
     return queue;
   }
 
+  flush():void {
+    const now = Date.now();
+    for (const [id] of this.deletions) {
+      const timestamp = parseInt(id.slice(0, 9), 36);
+      if (now - timestamp >= this.maxAge) {
+        this.deletions.delete(id);
+        this.deletionSignatureMap.delete(id);
+      }
+    }
+  }
+
   process(signedQueue:[Array<*>, Array<*>], skipFlush?: boolean = false):void {
     const [signedInsertQueue, signedDeleteQueue] = signedQueue;
-    const insertQueue = signedInsertQueue.map(([signature, id, value]) => {
+    const insertQueue = signedInsertQueue.map(([signature, id, hash, value]) => {
       if (!this.verify(signature, value, id)) {
         throw new InvalidSignatureError(`Signature does not match for value ${stringify(value)}`);
       }
       this.insertionSignatureMap.set(id, signature);
-      return [id, value];
+      return [hash, [id, value]];
     });
-    const deleteQueue = signedDeleteQueue.map(([signature, id]) => {
+    const deleteQueue = signedDeleteQueue.map(([signature, id, hash]) => {
       if (!this.verify(signature, id)) {
         throw new InvalidSignatureError(`Signature does not match for id ${stringify(id)}`);
       }
       this.deletionSignatureMap.set(id, signature);
-      return id;
+      return [id, hash];
     });
-    const queue:[Array<[string, T]>, Array<string>] = [insertQueue, deleteQueue];
+    const queue:[Array<[string, [string, T]]>, Array<[string, string]>] = [insertQueue, deleteQueue];
     super.process(queue, skipFlush);
+    for (const [signature, id, hash] of signedInsertQueue) { // eslint-disable-line no-unused-vars
+      const pair = this.pairs.get(hash);
+      if (!pair || pair[0] !== id) {
+        this.insertionSignatureMap.delete(id);
+      }
+    }
   }
 
   addSigned(value:T, id:string, signature:string) {
-    const message = [signature, id, value];
+    const hash = this.hash(value);
+    const message = [signature, id, hash, value];
     this.process([[message], []], true);
     this.insertQueue.push(message);
     this.dequeue();
@@ -88,10 +104,15 @@ class SignedObservedRemoveSet<T> extends ObservedRemoveSet<T> {
   }
 
   deleteSignedId(id:string, signature:string):void {
-    const message = [signature, id];
-    this.process([[], [message]], true);
-    this.deleteQueue.push(message);
-    this.dequeue();
+    for (const [hash, [pairId]] of this.pairs) {
+      if (pairId === id) {
+        const message = [signature, id, hash];
+        this.process([[], [message]], true);
+        this.deleteQueue.push(message);
+        this.dequeue();
+        return;
+      }
+    }
   }
 
   clear():void {

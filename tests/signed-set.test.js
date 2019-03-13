@@ -275,14 +275,11 @@ describe('Signed Set', () => {
     ids = set.activeIds(C);
     ids.forEach((d) => set.deleteSignedId(d, sign(d)));
     expect(set.deletions.size).toEqual(3);
-    expect(set.insertions.size).toEqual(3);
     set.flush();
     expect(set.deletions.size).toEqual(3);
-    expect(set.insertions.size).toEqual(3);
     await new Promise((resolve) => setTimeout(resolve, 100));
     set.flush();
     expect(set.deletions.size).toEqual(0);
-    expect(set.insertions.size).toEqual(0);
   });
 
 
@@ -297,7 +294,6 @@ describe('Signed Set', () => {
     const set = new SignedObservedRemoveSet([[A, idA, sign(A, idA)], [B, idB, sign(B, idB)], [C, idC, sign(C, idC)]], { key });
     set.flush();
     expect(set.deletions.size).toEqual(0);
-    expect(set.insertions.size).toEqual(3);
     id = generateId();
     set.addSigned(A, id, sign(A, id));
     id = generateId();
@@ -305,10 +301,8 @@ describe('Signed Set', () => {
     id = generateId();
     set.addSigned(C, id, sign(C, id));
     expect(set.deletions.size).toEqual(0);
-    expect(set.insertions.size).toEqual(6);
     set.flush();
     expect(set.deletions.size).toEqual(0);
-    expect(set.insertions.size).toEqual(3);
   });
 
 
@@ -457,8 +451,8 @@ describe('Signed Set', () => {
     while (aliceAddCount !== 3 || bobAddCount !== 3) {
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
-    expect([...alice]).toEqual([A, X, B, Y, C, Z]);
-    expect([...bob]).toEqual([A, X, B, Y, C, Z]);
+    expect(new Set([...alice])).toEqual(new Set([A, X, B, Y, C, Z]));
+    expect(new Set([...bob])).toEqual(new Set([A, X, B, Y, C, Z]));
   });
 
 
