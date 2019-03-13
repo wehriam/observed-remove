@@ -1,6 +1,5 @@
 // @flow
 
-const stringify = require('json-stringify-deterministic');
 const ObservedRemoveSet = require('./set');
 const getVerifier = require('./verifier');
 const { InvalidSignatureError } = require('./signed-error');
@@ -73,14 +72,14 @@ class SignedObservedRemoveSet<T> extends ObservedRemoveSet<T> {
     const [signedInsertQueue, signedDeleteQueue] = signedQueue;
     const insertQueue = signedInsertQueue.map(([signature, id, hash, value]) => {
       if (!this.verify(signature, value, id)) {
-        throw new InvalidSignatureError(`Signature does not match for value ${stringify(value)}`);
+        throw new InvalidSignatureError(`Signature does not match for value ${JSON.stringify(value)}`);
       }
       this.insertionSignatureMap.set(id, signature);
       return [hash, [id, value]];
     });
     const deleteQueue = signedDeleteQueue.map(([signature, id, hash]) => {
       if (!this.verify(signature, id)) {
-        throw new InvalidSignatureError(`Signature does not match for id ${stringify(id)}`);
+        throw new InvalidSignatureError(`Signature does not match for id ${JSON.stringify(id)}`);
       }
       this.deletionSignatureMap.set(id, signature);
       return [id, hash];

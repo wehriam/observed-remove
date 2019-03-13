@@ -1,10 +1,8 @@
 // @flow
 
 const { EventEmitter } = require('events');
-const objectHasherFactory = require('node-object-hash');
 const generateId = require('./generate-id');
-
-const objectHasher = objectHasherFactory({ sort: false, coerce: false });
+const hasher = require('./hasher');
 
 type Options = {
   maxAge?:number,
@@ -216,7 +214,7 @@ class ObservedRemoveSet<T> extends EventEmitter {
   }
 
   hash(value:T):string {
-    return objectHasher.hash(value, { enc: 'utf8' });
+    return hasher(value);
   }
 
   get size():number {

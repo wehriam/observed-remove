@@ -40,32 +40,30 @@
     }
   },
   "devDependencies": {
-    "babel-eslint": "^8.2.6",
-    "codecov": "^3.0.4",
+    "babel-eslint": "^9.0.0",
+    "codecov": "^3.2.0",
     "cross-env": "^5.2.0",
-    "documentation": "^8.1.0",
-    "eslint": "^5.3.0",
+    "documentation": "^9.3.1",
+    "eslint": "^5.15.1",
     "eslint-config-bunchtogether": "^1.1.6",
-    "eslint-plugin-flowtype": "^2.50.0",
-    "eslint-plugin-flowtype-errors": "^3.6.0",
-    "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-jest": "^21.21.0",
-    "eslint-plugin-jsx-a11y": "^6.1.1",
-    "eslint-plugin-react": "^7.11.1",
-    "expect": "^23.5.0",
-    "flow-bin": "^0.64.0",
+    "eslint-plugin-flowtype": "^3.4.2",
+    "eslint-plugin-flowtype-errors": "^4.0.0",
+    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-jest": "^22.3.2",
+    "eslint-plugin-jsx-a11y": "^6.2.1",
+    "eslint-plugin-react": "^7.12.4",
+    "expect": "^24.5.0",
+    "flow-bin": "^0.94.0",
+    "flow-copy-source": "^2.0.3",
     "flow-remove-types": "^1.2.3",
     "flow-typed": "^2.5.1",
-    "jest": "^23.5.0",
+    "jest": "^24.5.0",
     "jest-flow-transform": "^1.0.1",
     "pre-commit": "^1.2.2",
     "uuid": "^3.3.2"
   },
   "dependencies": {
-    "flow-copy-source": "^2.0.2",
-    "json-stringify-deterministic": "^1.0.1",
-    "murmur-hash": "^1.0.0",
     "node-object-hash": "^1.4.2",
-    "node-rsa": "^1.0.1"
+    "node-rsa": "^1.0.5"
   }
 }
