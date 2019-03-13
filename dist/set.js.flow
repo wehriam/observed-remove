@@ -1,9 +1,10 @@
 // @flow
 
 const { EventEmitter } = require('events');
-const stringify = require('json-stringify-deterministic');
-const murmurHash3 = require('murmur-hash').v3;
+const objectHasherFactory = require('node-object-hash');
 const generateId = require('./generate-id');
+
+const objectHasher = objectHasherFactory({ sort: false, coerce: false });
 
 type Options = {
   maxAge?:number,
@@ -215,8 +216,7 @@ class ObservedRemoveSet<T> extends EventEmitter {
   }
 
   hash(value:T):string {
-    const stringified = stringify(value);
-    return murmurHash3.x64.hash128(stringified);
+    return objectHasher.hash(value, { enc: 'utf8' });
   }
 
   get size():number {

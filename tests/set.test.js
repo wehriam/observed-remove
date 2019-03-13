@@ -105,6 +105,15 @@ describe('Set', () => {
     });
   });
 
+  test('Hashes objects', () => {
+    const A = [{ example: 1 }];
+    const B = [{ example: 1 }];
+    const set = new ObservedRemoveSet([A, B]);
+    expect(set.size).toEqual(1);
+    expect(set.has(A)).toEqual(true);
+    expect(set.has(B)).toEqual(true);
+  });
+
   test('Clear values', () => {
     const A = generateValue();
     const B = generateValue();

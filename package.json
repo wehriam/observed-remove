@@ -65,6 +65,7 @@
     "flow-copy-source": "^2.0.2",
     "json-stringify-deterministic": "^1.0.1",
     "murmur-hash": "^1.0.0",
+    "node-object-hash": "^1.4.2",
     "node-rsa": "^1.0.1"
   }
 }
