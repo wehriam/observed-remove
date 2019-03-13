@@ -320,8 +320,8 @@ describe('Set', () => {
     let aliceDeleteCount = 0;
     let bobDeleteCount = 0;
     await new Promise((resolve) => setTimeout(resolve, 100));
-    expect([...alice]).toEqual([A, B, C]);
-    expect([...bob]).toEqual([X, Y, Z]);
+    expect(new Set([...alice])).toEqual(new Set([A, B, C]));
+    expect(new Set([...bob])).toEqual(new Set([X, Y, Z]));
     alice.on('add', () => (aliceAddCount += 1));
     bob.on('add', () => (bobAddCount += 1));
     alice.on('delete', () => (aliceDeleteCount += 1));

@@ -172,8 +172,8 @@ class ObservedRemoveSet<T> extends EventEmitter {
   }
 
   * entries():Iterator<[T, T]> {
-    for (const pair of this.pairs.values()) {
-      yield [pair[1], pair[1]];
+    for (const [id, value] of this.pairs.values()) { // eslint-disable-line no-unused-vars
+      yield [value, value];
     }
   }
 
@@ -202,16 +202,15 @@ class ObservedRemoveSet<T> extends EventEmitter {
     return [pair[0]];
   }
 
-
   * keys():Iterator<T> {
-    for (const pair of this.pairs.values()) {
-      yield pair[1];
+    for (const [id, value] of this.pairs.values()) { // eslint-disable-line no-unused-vars
+      yield value;
     }
   }
 
   * values():Iterator<T> {
-    for (const pair of this.pairs.values()) {
-      yield pair[1];
+    for (const [id, value] of this.pairs.values()) { // eslint-disable-line no-unused-vars
+      yield value;
     }
   }
 

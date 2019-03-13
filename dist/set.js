@@ -172,8 +172,8 @@ class ObservedRemoveSet    extends EventEmitter {
   }
 
   * entries()                  {
-    for (const pair of this.pairs.values()) {
-      yield [pair[1], pair[1]];
+    for (const [id, value] of this.pairs.values()) { // eslint-disable-line no-unused-vars
+      yield [value, value];
     }
   }
 
@@ -202,16 +202,15 @@ class ObservedRemoveSet    extends EventEmitter {
     return [pair[0]];
   }
 
-
   * keys()             {
-    for (const pair of this.pairs.values()) {
-      yield pair[1];
+    for (const [id, value] of this.pairs.values()) { // eslint-disable-line no-unused-vars
+      yield value;
     }
   }
 
   * values()             {
-    for (const pair of this.pairs.values()) {
-      yield pair[1];
+    for (const [id, value] of this.pairs.values()) { // eslint-disable-line no-unused-vars
+      yield value;
     }
   }
 

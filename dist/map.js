@@ -158,16 +158,10 @@ class ObservedRemoveMap       extends EventEmitter {
     }
   }
 
-  nativeMap()           {
-    const entries           = new Map();
-    for (const [key, pair] of this.pairs) {
-      entries.set(key, pair[1]);
+  * entries()                  {
+    for (const [key, [id, value]] of this.pairs) { // eslint-disable-line no-unused-vars
+      yield [key, value];
     }
-    return entries;
-  }
-
-  entries()                  {
-    return this.nativeMap().entries();
   }
 
   forEach(callback         , thisArg     )      {
@@ -190,8 +184,10 @@ class ObservedRemoveMap       extends EventEmitter {
     return this.pairs.keys();
   }
 
-  values()             {
-    return this.nativeMap().values();
+  * values()             {
+    for (const [id, value] of this.pairs.values()) { // eslint-disable-line no-unused-vars
+      yield value;
+    }
   }
 
   get size()        {
