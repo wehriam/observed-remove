@@ -105,7 +105,7 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
       const pair = this.pairs.get(key);
       if (!pair || (pair && pair[0] < id)) {
         this.pairs.set(key, [id, value]);
-        this.emit('set', key, value);
+        this.emit('set', key, value, pair ? pair[1] : undefined);
       }
     }
     for (const [id, key] of deletions) {
