@@ -1,7 +1,7 @@
 [ignore]
 
 .*/node_modules/documentation/*
-.*/dist/*
+<PROJECT_ROOT>/dist/*
 
 [include]
 

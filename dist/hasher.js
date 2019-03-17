@@ -1,7 +1,5 @@
 //      
 
-const objectHasherFactory = require('node-object-hash');
+const { hash32 } = require('@bunchtogether/hash-object');
 
-const objectHasher = objectHasherFactory({ sort: false, coerce: false });
-
-module.exports = (value    ) => objectHasher.hash(value, { enc: 'utf8' });
+module.exports = (value    ) => hash32(value);
