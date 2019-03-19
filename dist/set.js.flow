@@ -86,10 +86,9 @@ class ObservedRemoveSet<T> extends EventEmitter {
   }
 
   flush() {
-    const now = Date.now();
+    const maxAgeString = (Date.now() - this.maxAge).toString(36).padStart(9, '0');
     for (const [id] of this.deletions) {
-      const timestamp = parseInt(id.slice(0, 9), 36);
-      if (now - timestamp >= this.maxAge) {
+      if (id < maxAgeString) {
         this.deletions.delete(id);
       }
     }
