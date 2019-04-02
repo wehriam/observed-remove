@@ -7,7 +7,6 @@ const { InvalidSignatureError } = require('./signed-error');
 type Options = {
   maxAge?:number,
   bufferPublishing?:number,
-  generateId?: () => string,
   key: any,
   format?: string
 };
