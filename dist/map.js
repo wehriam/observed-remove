@@ -121,7 +121,7 @@ class ObservedRemoveMap       extends EventEmitter {
 
   set(key  , value  , id          = generateId()) {
     const pair = this.pairs.get(key);
-    const insertMessage = [key, [id, value]];
+    const insertMessage = typeof value === 'undefined' ? [key, [id]] : [key, [id, value]];
     if (pair) {
       const deleteMessage = [pair[0], key];
       this.process([[insertMessage], [deleteMessage]], true);
