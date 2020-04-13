@@ -96,8 +96,6 @@ Returns **void**
 
 Return an array containing all of the set's insertions and deletions.
 
-Returns **\[[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>, [Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>]** 
-
 #### process
 
 Process an array of insertion and deletions.
@@ -105,7 +103,7 @@ Process an array of insertion and deletions.
 ##### Parameters
 
 -   `queue` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>>** Array of insertions and deletions
--   `skipFlush` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)**  (optional, default `false`)
+-   `skipFlush`   (optional, default `false`)
 
 Returns **void** 
 
@@ -132,8 +130,8 @@ See: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_O
 
 #### Parameters
 
--   `entries` **Iterable&lt;\[K, V]>** 
--   `options` **Options**  (optional, default `{}`)
+-   `entries`  
+-   `options`   (optional, default `{}`)
 
 #### sync
 
@@ -148,5 +146,3 @@ Returns **void**
 #### dump
 
 Return an array containing all of the map's insertions and deletions.
-
-Returns **\[[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>, [Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>]** 

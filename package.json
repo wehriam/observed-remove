@@ -21,7 +21,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn lint && yarn documentation && yarn build && git add dist"
+      "pre-commit": "yarn lint && yarn documentation && yarn build && git add dist ./README.md"
     }
   },
   "jest": {
