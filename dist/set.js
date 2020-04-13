@@ -16,13 +16,13 @@ const hasher = require('./hasher');
  * See: {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set}
  */
 class ObservedRemoveSet    extends EventEmitter {
-                 
-                           
-                                  
-                                 
-                        
-                        
+                         
                                    
+                                          
+                                         
+                                
+                                
+                                           
 
   /**
    * Create an observed-remove set.
@@ -48,7 +48,7 @@ class ObservedRemoveSet    extends EventEmitter {
     }
   }
 
-  /* :: @@iterator(): Iterator<T> { return ({}: any); } */
+  /* :: @@iterator()              { return ({}     ); } */
   // $FlowFixMe: computed property
   * [Symbol.iterator]() {
     for (const pair of this.pairs.values()) {

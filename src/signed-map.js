@@ -28,9 +28,9 @@ class SignedObservedRemoveMap<K, V> extends ObservedRemoveMap<K, V> {
     }
   }
 
-  insertionSignatureMap: Map<string, string>;
-  deletionSignatureMap: Map<string, string>;
-  verify: (string, ...Array<any>) => boolean;
+  declare insertionSignatureMap: Map<string, string>;
+  declare deletionSignatureMap: Map<string, string>;
+  declare verify: (string, ...Array<any>) => boolean;
 
   dump():[Array<*>, Array<*>] {
     const [insertQueue, deleteQueue] = super.dump();

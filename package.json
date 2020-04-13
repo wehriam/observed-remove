@@ -1,6 +1,6 @@
 {
   "name": "observed-remove",
-  "version": "2.2.7",
+  "version": "2.2.26",
   "main": "dist/index.js",
   "repository": "git@github.com:wehriam/observed-remove",
   "author": "John Wehr <johnwehr@gmail.com>",
@@ -14,7 +14,7 @@
     "lint:js": "eslint -c ./.eslintrc --no-eslintrc --fix .",
     "lint:flow": "flow --show-all-errors",
     "coverage": "codecov",
-    "documentation": "documentation readme src/set.js --section='Set API' && documentation readme src/map.js --section='Map API'",
+    "documentation": "documentation readme dist/set.js --section='Set API' && documentation readme dist/map.js --section='Map API'",
     "start-pre-commit": "git stash -q --keep-index",
     "end-pre-commit": "git add -u && git stash pop -q",
     "profile": "yarn build; clear; node --prof profile/map.js; node --prof-process $(ls isolate-*); rm isolate-*"
@@ -32,37 +32,36 @@
     ],
     "transformIgnorePatterns": [
       "node_modules/(?!observed-remove)/"
-    ],
-    "transform": {
-      "^.+\\.js(?:\\.flow)?$": "jest-flow-transform"
-    }
+    ]
   },
   "devDependencies": {
-    "babel-eslint": "^9.0.0",
-    "codecov": "^3.2.0",
-    "cross-env": "^5.2.0",
-    "documentation": "^9.3.1",
-    "eslint": "^5.15.1",
+    "@babel/core": "^7.9.0",
+    "@babel/plugin-transform-flow-strip-types": "^7.9.0",
+    "babel-eslint": "^10.1.0",
+    "babel-jest": "^25.3.0",
+    "codecov": "^3.6.5",
+    "cross-env": "^7.0.2",
+    "documentation": "^12.3.0",
+    "eslint": "^6.8.0",
     "eslint-config-bunchtogether": "^1.1.6",
-    "eslint-plugin-flowtype": "^3.4.2",
-    "eslint-plugin-flowtype-errors": "^4.0.0",
-    "eslint-plugin-import": "^2.16.0",
-    "eslint-plugin-jest": "^22.3.2",
-    "eslint-plugin-jsx-a11y": "^6.2.1",
-    "eslint-plugin-react": "^7.12.4",
-    "expect": "^24.5.0",
-    "flow-bin": "^0.94.0",
-    "flow-copy-source": "^2.0.3",
-    "flow-remove-types": "^1.2.3",
-    "flow-typed": "^2.5.1",
+    "eslint-plugin-flowtype": "^4.7.0",
+    "eslint-plugin-flowtype-errors": "^4.2.0",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-jest": "^23.8.2",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-react": "^7.19.0",
+    "expect": "^25.3.0",
+    "flow-bin": "^0.122.0",
+    "flow-copy-source": "^2.0.9",
+    "flow-remove-types": "^2.122.0",
+    "flow-typed": "^3.1.0",
     "husky": "^4.2.5",
-    "jest": "^24.5.0",
-    "jest-flow-transform": "^1.0.1",
-    "uuid": "^3.3.2"
+    "jest": "^25.3.0",
+    "uuid": "^7.0.3"
   },
   "dependencies": {
     "@bunchtogether/hash-object": "^1.0.3",
     "json-stringify-deterministic": "^1.0.1",
-    "node-rsa": "^1.0.5"
+    "node-rsa": "^1.0.8"
   }
 }

@@ -16,13 +16,13 @@ type Options = {
  * See: {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set}
  */
 class ObservedRemoveSet<T> extends EventEmitter {
-  maxAge: number;
-  bufferPublishing: number;
-  pairs: Map<string, [string, T]>;
-  deletions: Map<string, string>;
-  deleteQueue: Array<*>;
-  insertQueue: Array<*>;
-  publishTimeout: null | TimeoutID;
+  declare maxAge: number;
+  declare bufferPublishing: number;
+  declare pairs: Map<string, [string, T]>;
+  declare deletions: Map<string, string>;
+  declare deleteQueue: Array<*>;
+  declare insertQueue: Array<*>;
+  declare publishTimeout: null | TimeoutID;
 
   /**
    * Create an observed-remove set.

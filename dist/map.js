@@ -15,13 +15,13 @@ const generateId = require('./generate-id');
  * See: {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map}
  */
 class ObservedRemoveMap       extends EventEmitter {
-                 
-                           
-                             
-                            
-                        
-                        
+                         
                                    
+                                     
+                                    
+                                
+                                
+                                           
 
   constructor(entries                   , options          = {}) {
     super();
@@ -40,7 +40,7 @@ class ObservedRemoveMap       extends EventEmitter {
     }
   }
 
-  /* :: @@iterator(): Iterator<[K, V]> { return ({}: any); } */
+  /* :: @@iterator()                   { return ({}     ); } */
   // $FlowFixMe: computed property
   [Symbol.iterator]() {
     return this.entries();

@@ -15,13 +15,13 @@ type Options = {
  * See: {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map}
  */
 class ObservedRemoveMap<K, V> extends EventEmitter {
-  maxAge: number;
-  bufferPublishing: number;
-  pairs: Map<K, [string, V]>;
-  deletions: Map<string, K>;
-  deleteQueue: Array<*>;
-  insertQueue: Array<*>;
-  publishTimeout: null | TimeoutID;
+  declare maxAge: number;
+  declare bufferPublishing: number;
+  declare pairs: Map<K, [string, V]>;
+  declare deletions: Map<string, K>;
+  declare deleteQueue: Array<*>;
+  declare insertQueue: Array<*>;
+  declare publishTimeout: null | TimeoutID;
 
   constructor(entries?: Iterable<[K, V]>, options?:Options = {}) {
     super();

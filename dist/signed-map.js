@@ -28,9 +28,9 @@ class SignedObservedRemoveMap       extends ObservedRemoveMap       {
     }
   }
 
-                                             
-                                            
-                                             
+                                                     
+                                                    
+                                                     
 
   dump()                      {
     const [insertQueue, deleteQueue] = super.dump();

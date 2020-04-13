@@ -28,9 +28,9 @@ class SignedObservedRemoveSet    extends ObservedRemoveSet    {
     }
   }
 
-                                             
-                                            
-                                             
+                                                     
+                                                    
+                                                     
 
   /**
    * Return an array containing all of the set's insertions and deletions.
