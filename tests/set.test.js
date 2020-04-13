@@ -118,7 +118,7 @@ describe('Set', () => {
     const A = generateValue();
     const B = generateValue();
     const C = generateValue();
-    const set = new ObservedRemoveSet([A, B, C], { maxAge: 0, bufferPublishing: 0 });
+    const set = new ObservedRemoveSet([A, B, C], { maxAge: -1, bufferPublishing: 0 });
     expect(set.size).toEqual(3);
     set.clear();
     expect(set.size).toEqual(0);

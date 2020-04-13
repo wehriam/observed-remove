@@ -128,7 +128,7 @@ describe('Map', () => {
     const valueA = generateValue();
     const valueB = generateValue();
     const valueC = generateValue();
-    const map = new ObservedRemoveMap([[keyA, valueA], [keyB, valueB], [keyC, valueC]], { maxAge: 0, bufferPublishing: 0 });
+    const map = new ObservedRemoveMap([[keyA, valueA], [keyB, valueB], [keyC, valueC]], { maxAge: -1, bufferPublishing: 0 });
     expect(map.size).toEqual(3);
     map.clear();
     expect(map.size).toEqual(0);
@@ -460,6 +460,53 @@ describe('Map', () => {
     alice.process(bobDump2);
     expect(alice.get(key)).toBeUndefined();
     expect(bob.get(key)).toBeUndefined();
+  });
+
+  test('Affirm values if synchronization happens twice', async () => {
+    const keyA = uuid.v4();
+    const keyB = uuid.v4();
+    const valueA = generateValue();
+    const valueB = generateValue();
+    const alice = new ObservedRemoveMap([[keyA, valueA]]);
+    const bob = new ObservedRemoveMap([[keyB, valueB]]);
+    const setAPromise = new Promise((resolve) => {
+      bob.once('set', (k, v) => {
+        expect(k).toEqual(keyA);
+        expect(v).toEqual(valueA);
+        resolve();
+      });
+    });
+    const setBPromise = new Promise((resolve) => {
+      alice.once('set', (k, v) => {
+        expect(k).toEqual(keyB);
+        expect(v).toEqual(valueB);
+        resolve();
+      });
+    });
+    const aliceDump = alice.dump();
+    const bobDump = bob.dump();
+    alice.process(bobDump);
+    bob.process(aliceDump);
+    await setAPromise;
+    await setBPromise;
+    const affirmAPromise = new Promise((resolve) => {
+      bob.once('affirm', (k, v) => {
+        expect(k).toEqual(keyA);
+        expect(v).toEqual(valueA);
+        resolve();
+      });
+    });
+    const affirmBPromise = new Promise((resolve) => {
+      alice.once('affirm', (k, v) => {
+        expect(k).toEqual(keyB);
+        expect(v).toEqual(valueB);
+        resolve();
+      });
+    });
+    alice.process(bobDump);
+    bob.process(aliceDump);
+    await affirmAPromise;
+    await affirmBPromise;
   });
 });
 
