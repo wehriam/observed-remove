@@ -1,6 +1,6 @@
 {
   "name": "observed-remove",
-  "version": "2.2.26",
+  "version": "2.2.27",
   "main": "dist/index.js",
   "repository": "git@github.com:wehriam/observed-remove",
   "author": "John Wehr <johnwehr@gmail.com>",

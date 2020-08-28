@@ -17,7 +17,7 @@ type Options = {
 class ObservedRemoveMap<K, V> extends EventEmitter {
   declare maxAge: number;
   declare bufferPublishing: number;
-  declare pairs: Map<K, [string, V]>;
+  declare pairs: Map<K, Array<*>>;
   declare deletions: Map<string, K>;
   declare deleteQueue: Array<*>;
   declare insertQueue: Array<*>;
@@ -103,8 +103,12 @@ class ObservedRemoveMap<K, V> extends EventEmitter {
       }
       const pair = this.pairs.get(key);
       if (!pair || (pair && pair[0] < id)) {
-        this.pairs.set(key, [id, value]);
-        this.emit('set', key, value, pair ? pair[1] : undefined);
+        if (typeof value === 'undefined') {
+          this.pairs.set(key, [id]);
+        } else {
+          this.pairs.set(key, [id, value]);
+        }
+        this.emit('set', key, value, pair && pair[1] ? pair[1] : undefined);
       } else if (pair && pair[0] === id) {
         this.emit('affirm', key, value, pair ? pair[1] : undefined);
       }

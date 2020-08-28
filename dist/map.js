@@ -17,7 +17,7 @@ const generateId = require('./generate-id');
 class ObservedRemoveMap       extends EventEmitter {
                          
                                    
-                                     
+                                  
                                     
                                 
                                 
@@ -103,8 +103,12 @@ class ObservedRemoveMap       extends EventEmitter {
       }
       const pair = this.pairs.get(key);
       if (!pair || (pair && pair[0] < id)) {
-        this.pairs.set(key, [id, value]);
-        this.emit('set', key, value, pair ? pair[1] : undefined);
+        if (typeof value === 'undefined') {
+          this.pairs.set(key, [id]);
+        } else {
+          this.pairs.set(key, [id, value]);
+        }
+        this.emit('set', key, value, pair && pair[1] ? pair[1] : undefined);
       } else if (pair && pair[0] === id) {
         this.emit('affirm', key, value, pair ? pair[1] : undefined);
       }
