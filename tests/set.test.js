@@ -220,6 +220,19 @@ describe('Set', () => {
     await deletePromise;
   });
 
+  test('Do not send out add events if an element already exists in the set', async () => {
+    const X = Math.random();
+    const set = new ObservedRemoveSet([X], { maxAge: 100 });
+    let count = 0;
+    const handleAdd = () => {
+      count += 1;
+    };
+    set.on('add', handleAdd);
+    set.add(X);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(count).toEqual(0);
+  });
+
   test('Synchronize add and delete events', async () => {
     const X = generateValue();
     const Y = generateValue();
