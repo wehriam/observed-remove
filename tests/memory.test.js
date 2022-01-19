@@ -19,6 +19,7 @@ describe('Map Memory Test', () => {
   test('Set and delete values', () => {
     const map = new ObservedRemoveMap();
     const startMemoryUsage = process.memoryUsage();
+    const start = Date.now();
     for (let i = 0; i < 100000; i += 1) {
       const key = uuid.v4();
       const value = generateValue();
@@ -27,6 +28,7 @@ describe('Map Memory Test', () => {
         map.publish();
       }
     }
+    console.log(Date.now() - start);
     console.log(JSON.stringify(memoryDelta(startMemoryUsage), null, 2));
   });
 });
