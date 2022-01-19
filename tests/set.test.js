@@ -122,14 +122,14 @@ describe('Set', () => {
     expect(set.size).toEqual(3);
     set.clear();
     expect(set.size).toEqual(0);
-    expect(set.insertQueue.length).toEqual(0);
-    expect(set.deleteQueue.length).toEqual(0);
-    expect(set.deletions.size).toEqual(3);
+    expect(set.map.insertQueue.length).toEqual(0);
+    expect(set.map.deleteQueue.length).toEqual(0);
+    expect(set.map.deletions.size).toEqual(3);
     set.flush();
     expect(set.size).toEqual(0);
-    expect(set.insertQueue.length).toEqual(0);
-    expect(set.deleteQueue.length).toEqual(0);
-    expect(set.deletions.size).toEqual(0);
+    expect(set.map.insertQueue.length).toEqual(0);
+    expect(set.map.deleteQueue.length).toEqual(0);
+    expect(set.map.deletions.size).toEqual(0);
   });
 
   test('Synchronize sets', async () => {
@@ -178,12 +178,12 @@ describe('Set', () => {
     set.delete(X);
     set.delete(Y);
     set.delete(Z);
-    expect(set.deletions.size).toEqual(3);
+    expect(set.map.deletions.size).toEqual(3);
     set.flush();
-    expect(set.deletions.size).toEqual(3);
+    expect(set.map.deletions.size).toEqual(3);
     await new Promise((resolve) => setTimeout(resolve, 200));
     set.flush();
-    expect(set.deletions.size).toEqual(0);
+    expect(set.map.deletions.size).toEqual(0);
   });
 
   test('Flush deletions from add events', async () => {
@@ -192,14 +192,14 @@ describe('Set', () => {
     const Z = generateValue();
     const set = new ObservedRemoveSet([X, Y, Z], { maxAge: 100 });
     set.flush();
-    expect(set.deletions.size).toEqual(0);
+    expect(set.map.deletions.size).toEqual(0);
     set.add(X);
     set.add(Y);
     set.add(Z);
-    expect(set.deletions.size).toEqual(3);
+    expect(set.map.deletions.size).toEqual(3);
     await new Promise((resolve) => setTimeout(resolve, 200));
     set.flush();
-    expect(set.deletions.size).toEqual(0);
+    expect(set.map.deletions.size).toEqual(0);
   });
 
   test('Only send out delete events when values have changed', async () => {

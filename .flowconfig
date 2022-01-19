@@ -2,6 +2,7 @@
 
 .*/node_modules/documentation/*
 <PROJECT_ROOT>/dist/*
+<PROJECT_ROOT>/tests/signed-map.test.js
 
 [include]
 

@@ -2,7 +2,7 @@
 
 const expect = require('expect');
 const uuid = require('uuid');
-const { InvalidSignatureError, SignedObservedRemoveMap, getSigner, generateId } = require('../src');
+const { InvalidSignatureError, SignedObservedRemoveMap, getSigner } = require('../src');
 const { generateValue } = require('./lib/values');
 const NodeRSA = require('node-rsa');
 
@@ -18,12 +18,12 @@ describe('Signed Map', () => {
     const valueB = generateValue();
     const map = new SignedObservedRemoveMap([], { key });
     expect(map.size).toEqual(0);
-    const id1 = generateId();
+    const id1 = map.generateId();
     map.setSigned(keyA, valueA, id1, sign(keyA, valueA, id1));
     expect(map.has(keyA)).toEqual(true);
     expect(map.has(keyB)).toEqual(false);
     expect(map.size).toEqual(1);
-    const id2 = generateId();
+    const id2 = map.generateId();
     map.setSigned(keyB, valueB, id2, sign(keyB, valueB, id2));
     expect(map.has(keyA)).toEqual(true);
     expect(map.has(keyB)).toEqual(true);
@@ -36,12 +36,12 @@ describe('Signed Map', () => {
     expect(map.has(keyA)).toEqual(false);
     expect(map.has(keyB)).toEqual(false);
     expect(map.size).toEqual(0);
-    const id3 = generateId();
+    const id3 = map.generateId();
     map.setSigned(keyA, valueA, id3, sign(keyA, valueA, id3));
     expect(map.has(keyA)).toEqual(true);
     expect(map.has(keyB)).toEqual(false);
     expect(map.size).toEqual(1);
-    const id4 = generateId();
+    const id4 = map.generateId();
     map.setSigned(keyB, valueB, id4, sign(keyB, valueB, id4));
     expect(map.has(keyA)).toEqual(true);
     expect(map.has(keyB)).toEqual(true);
@@ -57,12 +57,12 @@ describe('Signed Map', () => {
     const valueA = generateValue();
     const map = new SignedObservedRemoveMap([], { key });
     expect(() => {
-      new SignedObservedRemoveMap([[keyA, valueA, generateId(), '***']], { key }); // eslint-disable-line no-new
+      new SignedObservedRemoveMap([[keyA, valueA, map.generateId(), '***']], { key }); // eslint-disable-line no-new
     }).toThrowError(InvalidSignatureError);
     expect(() => {
-      map.setSigned(keyA, valueA, generateId(), '***');
+      map.setSigned(keyA, valueA, map.generateId(), '***');
     }).toThrowError(InvalidSignatureError);
-    const id = generateId();
+    const id = map.generateId();
     map.setSigned(keyA, valueA, id, sign(keyA, valueA, id));
     expect(() => {
       map.deleteSigned(keyA, id, '***');
@@ -90,7 +90,7 @@ describe('Signed Map', () => {
     const valueY = generateValue();
     const alice = new SignedObservedRemoveMap([], { key: aliceKey });
     const bob = new SignedObservedRemoveMap([], { key: bobKey });
-    const id1 = generateId();
+    const id1 = bob.generateId();
     const bobMessage1 = await new Promise((resolve) => {
       bob.on('publish', (message) => {
         resolve(message);
@@ -100,7 +100,7 @@ describe('Signed Map', () => {
     expect(() => {
       alice.process(bobMessage1);
     }).toThrowError(InvalidSignatureError);
-    const id2 = generateId();
+    const id2 = alice.generateId();
     const aliceMessage1 = await new Promise((resolve) => {
       alice.on('publish', (message) => {
         resolve(message);
@@ -137,7 +137,7 @@ describe('Signed Map', () => {
     const valueA = generateValue();
     const valueB = generateValue();
     const map = new SignedObservedRemoveMap([], { key });
-    const id1 = generateId();
+    const id1 = map.generateId();
     const setAPromise = new Promise((resolve) => {
       map.once('set', (k, v) => {
         expect(k).toEqual(keyA);
@@ -146,7 +146,7 @@ describe('Signed Map', () => {
       });
       map.setSigned(keyA, valueA, id1, sign(keyA, valueA, id1));
     });
-    const id2 = generateId();
+    const id2 = map.generateId();
     const setBPromise = new Promise((resolve) => {
       map.once('set', (k, v) => {
         expect(k).toEqual(keyB);
@@ -184,9 +184,9 @@ describe('Signed Map', () => {
     const valueA = generateValue();
     const valueB = generateValue();
     const valueC = generateValue();
-    const idA = generateId();
-    const idB = generateId();
-    const idC = generateId();
+    const idA = 1;
+    const idB = 2;
+    const idC = 3;
     const map = new SignedObservedRemoveMap([[keyA, valueA, idA, sign(keyA, valueA, idA)], [keyB, valueB, idB, sign(keyB, valueB, idB)], [keyC, valueC, idC, sign(keyC, valueC, idC)]], { key });
     let i = 0;
     for (const [k, v] of map) { // eslint-disable-line no-restricted-syntax
@@ -237,11 +237,11 @@ describe('Signed Map', () => {
     bob.on('publish', (message) => {
       alice.process(message);
     });
-    const id1 = generateId();
+    const id1 = alice.generateId();
     alice.setSigned(keyX, valueX, id1, sign(keyX, valueX, id1));
-    const id2 = generateId();
+    const id2 = bob.generateId();
     alice.setSigned(keyY, valueY, id2, sign(keyY, valueY, id2));
-    const id3 = generateId();
+    const id3 = alice.generateId();
     alice.setSigned(keyZ, valueZ, id3, sign(keyZ, valueZ, id3));
     while (aliceAddCount !== 3 || bobAddCount !== 3) {
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -277,22 +277,19 @@ describe('Signed Map', () => {
     const valueX = generateValue();
     const valueY = generateValue();
     const valueZ = generateValue();
-    const idX = generateId();
-    const idY = generateId();
-    const idZ = generateId();
+    const idX = 1;
+    const idY = 2;
+    const idZ = 3;
     const map = new SignedObservedRemoveMap([[keyX, valueX, idX, sign(keyX, valueX, idX)], [keyY, valueY, idY, sign(keyY, valueY, idY)], [keyZ, valueZ, idZ, sign(keyZ, valueZ, idZ)]], { maxAge: 100, key });
     map.deleteSigned(keyX, idX, sign(keyX, idX));
     map.deleteSigned(keyY, idY, sign(keyY, idY));
     map.deleteSigned(keyZ, idZ, sign(keyZ, idZ));
     expect(map.deletions.size).toEqual(3);
-    expect(map.deletionSignatureMap.size).toEqual(3);
     map.flush();
     expect(map.deletions.size).toEqual(3);
-    expect(map.deletionSignatureMap.size).toEqual(3);
     await new Promise((resolve) => setTimeout(resolve, 200));
     map.flush();
     expect(map.deletions.size).toEqual(0);
-    expect(map.deletionSignatureMap.size).toEqual(0);
   });
 
 
@@ -323,7 +320,7 @@ describe('Signed Map', () => {
         resolve();
       });
     });
-    const id1 = generateId();
+    const id1 = bob.generateId();
     bob.setSigned(keyX, valueX, id1, sign(keyX, valueX, id1));
     await aliceSetXPromise;
     bob.deleteSigned(keyX, id1, sign(keyX, id1));
@@ -342,7 +339,7 @@ describe('Signed Map', () => {
         resolve();
       });
     });
-    const id2 = generateId();
+    const id2 = alice.generateId();
     alice.setSigned(keyY, valueY, id2, sign(keyY, valueY, id2));
     await bobSetYPromise;
     alice.deleteSigned(keyY, id2, sign(keyY, id2));
@@ -354,12 +351,12 @@ describe('Signed Map', () => {
     const keyY = uuid.v4();
     const valueX = generateValue();
     const valueY = generateValue();
-    const alice = new SignedObservedRemoveMap([], { key });
-    const bob = new SignedObservedRemoveMap([], { key });
-    const id1 = generateId();
+    const alice = new SignedObservedRemoveMap([], { key, bufferPublishing: 30 });
+    const bob = new SignedObservedRemoveMap([], { key, bufferPublishing: 30 });
+    const id1 = alice.generateId();
     alice.setSigned(keyX, valueX, id1, sign(keyX, valueX, id1));
     alice.deleteSigned(keyX, id1, sign(keyX, id1));
-    const id2 = generateId();
+    const id2 = bob.generateId();
     bob.setSigned(keyY, valueY, id2, sign(keyY, valueY, id2));
     bob.deleteSigned(keyY, id2, sign(keyY, id2));
     await new Promise((resolve) => setTimeout(resolve, 250));
@@ -398,7 +395,6 @@ describe('Signed Map', () => {
   });
 
   test('Synchronize mixed maps using sync', async () => {
-    let id;
     const keyA = uuid.v4();
     const keyB = uuid.v4();
     const keyC = uuid.v4();
@@ -413,18 +409,18 @@ describe('Signed Map', () => {
     const valueZ = generateValue();
     const alice = new SignedObservedRemoveMap([], { key });
     const bob = new SignedObservedRemoveMap([], { key });
-    id = generateId();
-    alice.setSigned(keyA, valueA, id, sign(keyA, valueA, id));
-    id = generateId();
-    bob.setSigned(keyX, valueX, id, sign(keyX, valueX, id));
-    id = generateId();
-    alice.setSigned(keyB, valueB, id, sign(keyB, valueB, id));
-    id = generateId();
-    bob.setSigned(keyY, valueY, id, sign(keyY, valueY, id));
-    id = generateId();
-    alice.setSigned(keyC, valueC, id, sign(keyC, valueC, id));
-    id = generateId();
-    bob.setSigned(keyZ, valueZ, id, sign(keyZ, valueZ, id));
+    const idA = alice.generateId();
+    alice.setSigned(keyA, valueA, idA, sign(keyA, valueA, idA));
+    const idX = bob.generateId();
+    bob.setSigned(keyX, valueX, idX, sign(keyX, valueX, idX));
+    const idB = alice.generateId();
+    alice.setSigned(keyB, valueB, idB, sign(keyB, valueB, idB));
+    const idY = bob.generateId();
+    bob.setSigned(keyY, valueY, idY, sign(keyY, valueY, idY));
+    const idC = alice.generateId();
+    alice.setSigned(keyC, valueC, idC, sign(keyC, valueC, idC));
+    const idZ = bob.generateId();
+    bob.setSigned(keyZ, valueZ, idZ, sign(keyZ, valueZ, idZ));
     let aliceAddCount = 0;
     let bobAddCount = 0;
     let aliceDeleteCount = 0;
@@ -452,15 +448,14 @@ describe('Signed Map', () => {
   });
 
   test('Key-value pairs should not repeat', async () => {
-    let id;
     const k = uuid.v4();
     const value1 = generateValue();
     const value2 = generateValue();
     const alice = new SignedObservedRemoveMap([], { key });
-    id = generateId();
-    alice.setSigned(k, value1, id, sign(k, value1, id));
-    id = generateId();
-    alice.setSigned(k, value2, id, sign(k, value2, id));
+    const id1 = alice.generateId();
+    alice.setSigned(k, value1, id1, sign(k, value1, id1));
+    const id2 = alice.generateId();
+    alice.setSigned(k, value2, id2, sign(k, value2, id2));
     expect([...alice].length).toEqual(1);
     expect([...alice.entries()].length).toEqual(1);
     expect([...alice.keys()].length).toEqual(1);
@@ -516,11 +511,11 @@ describe('Signed Map', () => {
     bob.on('set', () => (bobAddCount += 1));
     alice.on('delete', () => (aliceDeleteCount += 1));
     bob.on('delete', () => (bobDeleteCount += 1));
-    const id1 = generateId();
+    const id1 = alice.generateId();
     alice.setSigned(keyA, valueA, id1, sign(keyA, valueA, id1));
-    const id2 = generateId();
+    const id2 = bob.generateId();
     bob.setSigned(keyB, valueB, id2, sign(keyB, valueB, id2));
-    const id3 = generateId();
+    const id3 = alice.generateId();
     alice.setSigned(keyC, valueC, id3, sign(keyC, valueC, id3));
     while (aliceAddCount !== 3 || bobAddCount !== 3) {
       await new Promise((resolve) => setTimeout(resolve, 20));

@@ -1,5 +1,5 @@
 // @flow
 
-const { hash32 } = require('@bunchtogether/hash-object');
+const getMurmurHash3 = require('imurmurhash');
 
-module.exports = (value:any) => hash32(value);
+module.exports = (value:any) => getMurmurHash3(typeof value === 'string' ? value : JSON.stringify(value)).result();

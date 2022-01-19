@@ -87,6 +87,19 @@ describe('Map', () => {
     await deleteBPromise;
   });
 
+  test('Do not send out set events if a key, value pair already exists in the map', async () => {
+    const key = uuid.v4();
+    const value = generateValue();
+    const map = new ObservedRemoveMap([[key, value]]);
+    let count = 0;
+    const handleSet = () => {
+      count += 1;
+    };
+    map.on('set', handleSet);
+    map.set(key, value);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(count).toEqual(0);
+  });
 
   test('Iterate through values', () => {
     const keyA = uuid.v4();
