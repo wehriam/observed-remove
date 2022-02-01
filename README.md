@@ -60,13 +60,13 @@ bob.get('a'); // 1
 
 #### Table of Contents
 
--   [ObservedRemoveSet](#observedremoveset)
-    -   [Parameters](#parameters)
-    -   [sync](#sync)
-        -   [Parameters](#parameters-1)
-    -   [dump](#dump)
-    -   [process](#process)
-        -   [Parameters](#parameters-2)
+*   [ObservedRemoveSet](#observedremoveset)
+    *   [Parameters](#parameters)
+    *   [sync](#sync)
+        *   [Parameters](#parameters-1)
+    *   [dump](#dump)
+    *   [process](#process)
+        *   [Parameters](#parameters-2)
 
 ### ObservedRemoveSet
 
@@ -79,8 +79,8 @@ See: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_O
 
 #### Parameters
 
--   `entries` **Iterable&lt;T>** Iterable of initial values (optional, default `[]`)
--   `options` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)**  (optional, default `{}`)
+*   `entries` **Iterable\<T>** Iterable of initial values (optional, default `[]`)
+*   `options` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)**  (optional, default `{}`)
 
 #### sync
 
@@ -88,9 +88,9 @@ Emit a 'publish' event containing a specified queue or all of the set's insertio
 
 ##### Parameters
 
--   `queue` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>>** Array of insertions and deletions (optional, default `this.dump()`)
+*   `queue` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)<[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)\<any>>** Array of insertions and deletions (optional, default `this.dump()`)
 
-Returns **void** 
+Returns **void**
 
 #### dump
 
@@ -102,10 +102,10 @@ Process an array of insertion and deletions.
 
 ##### Parameters
 
--   `queue` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>>** Array of insertions and deletions
--   `skipFlush`   (optional, default `false`)
+*   `queue` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)<[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)\<any>>** Array of insertions and deletions
+*   `skipFlush`   (optional, default `false`)
 
-Returns **void** 
+Returns **void**
 
 ## Map API
 
@@ -113,11 +113,11 @@ Returns **void**
 
 #### Table of Contents
 
--   [ObservedRemoveMap](#observedremovemap)
-    -   [Parameters](#parameters)
-    -   [sync](#sync)
-        -   [Parameters](#parameters-1)
-    -   [dump](#dump)
+*   [ObservedRemoveMap](#observedremovemap)
+    *   [Parameters](#parameters)
+    *   [sync](#sync)
+        *   [Parameters](#parameters-1)
+    *   [dump](#dump)
 
 ### ObservedRemoveMap
 
@@ -130,8 +130,8 @@ See: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_O
 
 #### Parameters
 
--   `entries`  
--   `options`   (optional, default `{}`)
+*   `entries`  
+*   `options`   (optional, default `{}`)
 
 #### sync
 
@@ -139,7 +139,7 @@ Emit a 'publish' event containing a specified queue or all of the set's insertio
 
 ##### Parameters
 
--   `queue` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)&lt;any>>** Array of insertions and deletions (optional, default `this.dump()`)
+*   `queue` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)<[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)\<any>>** Array of insertions and deletions (optional, default `this.dump()`)
 
 Returns **void** 
 
