@@ -15,8 +15,6 @@
     "lint:flow": "flow --show-all-errors",
     "coverage": "codecov",
     "documentation": "documentation readme dist/set.js --section='Set API' && documentation readme dist/map.js --section='Map API'",
-    "start-pre-commit": "git stash -q --keep-index",
-    "end-pre-commit": "git add -u && git stash pop -q",
     "profile": "yarn build; clear; node --prof profile/map.js; node --prof-process $(ls isolate-*); rm isolate-*"
   },
   "jest": {
