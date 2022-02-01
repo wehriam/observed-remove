@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../src/signed-error.js"],"names":["InvalidSignatureError","Error"],"mappings":";;;;;;;AAEO,MAAMA,qBAAN,SAAoCC,KAApC,CAA0C","sourcesContent":["// @flow\n\nexport class InvalidSignatureError extends Error {}\n"],"file":"signed-error.js"}

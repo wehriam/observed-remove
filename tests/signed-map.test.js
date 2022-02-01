@@ -1,10 +1,11 @@
 // @flow
 
-const expect = require('expect');
-const uuid = require('uuid');
-const { InvalidSignatureError, SignedObservedRemoveMap, getSigner, generateId } = require('../src');
-const { generateValue } = require('./lib/values');
-const NodeRSA = require('node-rsa');
+import NodeRSA from 'node-rsa';
+import expect from 'expect';
+import { v4 as uuidv4 } from 'uuid';
+import { generateValue } from './lib/values';
+
+import { InvalidSignatureError, SignedObservedRemoveMap, getSigner, generateId } from '../src';
 
 const privateKey = new NodeRSA({ b: 512 });
 const sign = getSigner(privateKey.exportKey('pkcs1-private-pem'));
@@ -12,8 +13,8 @@ const key = privateKey.exportKey('pkcs1-public-pem');
 
 describe('Signed Map', () => {
   test('Set and delete values', () => {
-    const keyA = uuid.v4();
-    const keyB = uuid.v4();
+    const keyA = uuidv4();
+    const keyB = uuidv4();
     const valueA = generateValue();
     const valueB = generateValue();
     const map = new SignedObservedRemoveMap([], { key });
@@ -53,7 +54,7 @@ describe('Signed Map', () => {
   });
 
   test('Throw on invalid signatures', () => {
-    const keyA = uuid.v4();
+    const keyA = uuidv4();
     const valueA = generateValue();
     const map = new SignedObservedRemoveMap([], { key });
     expect(() => {
@@ -84,8 +85,8 @@ describe('Signed Map', () => {
     const bobPrivateKey = new NodeRSA({ b: 512 });
     const bobSign = getSigner(bobPrivateKey.exportKey('pkcs1-private-pem'));
     const bobKey = bobPrivateKey.exportKey('pkcs1-public-pem');
-    const keyX = uuid.v4();
-    const keyY = uuid.v4();
+    const keyX = uuidv4();
+    const keyY = uuidv4();
     const valueX = generateValue();
     const valueY = generateValue();
     const alice = new SignedObservedRemoveMap([], { key: aliceKey });
@@ -132,8 +133,8 @@ describe('Signed Map', () => {
 
 
   test('Emit set and delete events', async () => {
-    const keyA = uuid.v4();
-    const keyB = uuid.v4();
+    const keyA = uuidv4();
+    const keyB = uuidv4();
     const valueA = generateValue();
     const valueB = generateValue();
     const map = new SignedObservedRemoveMap([], { key });
@@ -178,9 +179,9 @@ describe('Signed Map', () => {
   });
 
   test('Iterate through values', () => {
-    const keyA = uuid.v4();
-    const keyB = uuid.v4();
-    const keyC = uuid.v4();
+    const keyA = uuidv4();
+    const keyB = uuidv4();
+    const keyC = uuidv4();
     const valueA = generateValue();
     const valueB = generateValue();
     const valueC = generateValue();
@@ -215,9 +216,9 @@ describe('Signed Map', () => {
 
 
   test('Synchronize maps', async () => {
-    const keyX = uuid.v4();
-    const keyY = uuid.v4();
-    const keyZ = uuid.v4();
+    const keyX = uuidv4();
+    const keyY = uuidv4();
+    const keyZ = uuidv4();
     const valueX = generateValue();
     const valueY = generateValue();
     const valueZ = generateValue();
@@ -271,9 +272,9 @@ describe('Signed Map', () => {
   });
 
   test('Flush deletions', async () => {
-    const keyX = uuid.v4();
-    const keyY = uuid.v4();
-    const keyZ = uuid.v4();
+    const keyX = uuidv4();
+    const keyY = uuidv4();
+    const keyZ = uuidv4();
     const valueX = generateValue();
     const valueY = generateValue();
     const valueZ = generateValue();
@@ -297,8 +298,8 @@ describe('Signed Map', () => {
 
 
   test('Synchronize set and delete events', async () => {
-    const keyX = uuid.v4();
-    const keyY = uuid.v4();
+    const keyX = uuidv4();
+    const keyY = uuidv4();
     const valueX = generateValue();
     const valueY = generateValue();
     const alice = new SignedObservedRemoveMap([], { key });
@@ -350,8 +351,8 @@ describe('Signed Map', () => {
   });
 
   test('Should not emit events for remote set/delete combos on sync', async () => {
-    const keyX = uuid.v4();
-    const keyY = uuid.v4();
+    const keyX = uuidv4();
+    const keyY = uuidv4();
     const valueX = generateValue();
     const valueY = generateValue();
     const alice = new SignedObservedRemoveMap([], { key });
@@ -399,12 +400,12 @@ describe('Signed Map', () => {
 
   test('Synchronize mixed maps using sync', async () => {
     let id;
-    const keyA = uuid.v4();
-    const keyB = uuid.v4();
-    const keyC = uuid.v4();
-    const keyX = uuid.v4();
-    const keyY = uuid.v4();
-    const keyZ = uuid.v4();
+    const keyA = uuidv4();
+    const keyB = uuidv4();
+    const keyC = uuidv4();
+    const keyX = uuidv4();
+    const keyY = uuidv4();
+    const keyZ = uuidv4();
     const valueA = generateValue();
     const valueB = generateValue();
     const valueC = generateValue();
@@ -453,7 +454,7 @@ describe('Signed Map', () => {
 
   test('Key-value pairs should not repeat', async () => {
     let id;
-    const k = uuid.v4();
+    const k = uuidv4();
     const value1 = generateValue();
     const value2 = generateValue();
     const alice = new SignedObservedRemoveMap([], { key });
@@ -473,9 +474,9 @@ describe('Signed Map', () => {
   });
 
   test('Synchronizes 100 asynchrous maps', async () => {
-    const keyA = uuid.v4();
-    const keyB = uuid.v4();
-    const keyC = uuid.v4();
+    const keyA = uuidv4();
+    const keyB = uuidv4();
+    const keyC = uuidv4();
     const valueA = generateValue();
     const valueB = generateValue();
     const valueC = generateValue();

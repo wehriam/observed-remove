@@ -1,9 +1,9 @@
 // @flow
 
-const expect = require('expect');
-const { getSigner, getVerifier } = require('../src');
-const { generateValue } = require('./lib/values');
-const NodeRSA = require('node-rsa');
+import expect from 'expect';
+import NodeRSA from 'node-rsa';
+import { generateValue } from './lib/values';
+import { getSigner, getVerifier } from '../src';
 
 const key = new NodeRSA({ b: 512 });
 

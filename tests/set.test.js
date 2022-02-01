@@ -1,8 +1,8 @@
 // @flow
 
-const expect = require('expect');
-const { ObservedRemoveSet } = require('../src');
-const { generateValue } = require('./lib/values');
+import expect from 'expect';
+import { ObservedRemoveSet } from '../src';
+import { generateValue } from './lib/values';
 
 
 describe('Set', () => {

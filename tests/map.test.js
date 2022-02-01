@@ -1,14 +1,14 @@
 // @flow
 
-const expect = require('expect');
-const uuid = require('uuid');
-const { ObservedRemoveMap } = require('../src');
-const { generateValue } = require('./lib/values');
+import expect from 'expect';
+import { v4 as uuidv4 } from 'uuid';
+import { ObservedRemoveMap } from '../src';
+import { generateValue } from './lib/values';
 
 describe('Map', () => {
   test('Set and delete values', () => {
-    const keyA = uuid.v4();
-    const keyB = uuid.v4();
+    const keyA = uuidv4();
+    const keyB = uuidv4();
     const valueA = generateValue();
     const valueB = generateValue();
     const map = new ObservedRemoveMap();
@@ -44,8 +44,8 @@ describe('Map', () => {
   });
 
   test('Emit set and delete events', async () => {
-    const keyA = uuid.v4();
-    const keyB = uuid.v4();
+    const keyA = uuidv4();
+    const keyB = uuidv4();
     const valueA = generateValue();
     const valueB = generateValue();
     const map = new ObservedRemoveMap();
@@ -89,9 +89,9 @@ describe('Map', () => {
 
 
   test('Iterate through values', () => {
-    const keyA = uuid.v4();
-    const keyB = uuid.v4();
-    const keyC = uuid.v4();
+    const keyA = uuidv4();
+    const keyB = uuidv4();
+    const keyC = uuidv4();
     const valueA = generateValue();
     const valueB = generateValue();
     const valueC = generateValue();
@@ -122,9 +122,9 @@ describe('Map', () => {
   });
 
   test('Clear values', () => {
-    const keyA = uuid.v4();
-    const keyB = uuid.v4();
-    const keyC = uuid.v4();
+    const keyA = uuidv4();
+    const keyB = uuidv4();
+    const keyC = uuidv4();
     const valueA = generateValue();
     const valueB = generateValue();
     const valueC = generateValue();
@@ -143,9 +143,9 @@ describe('Map', () => {
   });
 
   test('Synchronize maps', async () => {
-    const keyX = uuid.v4();
-    const keyY = uuid.v4();
-    const keyZ = uuid.v4();
+    const keyX = uuidv4();
+    const keyY = uuidv4();
+    const keyZ = uuidv4();
     const valueX = generateValue();
     const valueY = generateValue();
     const valueZ = generateValue();
@@ -196,9 +196,9 @@ describe('Map', () => {
   });
 
   test('Flush deletions', async () => {
-    const keyX = uuid.v4();
-    const keyY = uuid.v4();
-    const keyZ = uuid.v4();
+    const keyX = uuidv4();
+    const keyY = uuidv4();
+    const keyZ = uuidv4();
     const valueX = generateValue();
     const valueY = generateValue();
     const valueZ = generateValue();
@@ -215,8 +215,8 @@ describe('Map', () => {
   });
 
   test('Synchronize set and delete events', async () => {
-    const keyX = uuid.v4();
-    const keyY = uuid.v4();
+    const keyX = uuidv4();
+    const keyY = uuidv4();
     const valueX = generateValue();
     const valueY = generateValue();
     const alice = new ObservedRemoveMap();
@@ -266,8 +266,8 @@ describe('Map', () => {
   });
 
   test('Should not emit events for remote set/delete combos on sync', async () => {
-    const keyX = uuid.v4();
-    const keyY = uuid.v4();
+    const keyX = uuidv4();
+    const keyY = uuidv4();
     const valueX = generateValue();
     const valueY = generateValue();
     const alice = new ObservedRemoveMap();
@@ -312,12 +312,12 @@ describe('Map', () => {
   });
 
   test('Synchronize mixed maps using sync', async () => {
-    const keyA = uuid.v4();
-    const keyB = uuid.v4();
-    const keyC = uuid.v4();
-    const keyX = uuid.v4();
-    const keyY = uuid.v4();
-    const keyZ = uuid.v4();
+    const keyA = uuidv4();
+    const keyB = uuidv4();
+    const keyC = uuidv4();
+    const keyX = uuidv4();
+    const keyY = uuidv4();
+    const keyZ = uuidv4();
     const valueA = generateValue();
     const valueB = generateValue();
     const valueC = generateValue();
@@ -359,7 +359,7 @@ describe('Map', () => {
   });
 
   test('Key-value pairs should not repeat', async () => {
-    const key = uuid.v4();
+    const key = uuidv4();
     const value1 = generateValue();
     const value2 = generateValue();
     const alice = new ObservedRemoveMap();
@@ -377,9 +377,9 @@ describe('Map', () => {
   });
 
   test('Synchronizes 100 asynchrous maps', async () => {
-    const keyA = uuid.v4();
-    const keyB = uuid.v4();
-    const keyC = uuid.v4();
+    const keyA = uuidv4();
+    const keyB = uuidv4();
+    const keyC = uuidv4();
     const valueA = generateValue();
     const valueB = generateValue();
     const valueC = generateValue();
@@ -439,7 +439,7 @@ describe('Map', () => {
   test('Synchronize out of order sets', async () => {
     const alice = new ObservedRemoveMap([]);
     const bob = new ObservedRemoveMap([]);
-    const key = uuid.v4();
+    const key = uuidv4();
     const value1 = generateValue();
     const value2 = generateValue();
     alice.set(key, value1);
@@ -463,8 +463,8 @@ describe('Map', () => {
   });
 
   test('Affirm values if synchronization happens twice', async () => {
-    const keyA = uuid.v4();
-    const keyB = uuid.v4();
+    const keyA = uuidv4();
+    const keyB = uuidv4();
     const valueA = generateValue();
     const valueB = generateValue();
     const alice = new ObservedRemoveMap([[keyA, valueA]]);

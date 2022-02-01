@@ -1,9 +1,9 @@
 // @flow
 
-const expect = require('expect');
-const { InvalidSignatureError, SignedObservedRemoveSet, getSigner, generateId } = require('../src');
-const { generateValue } = require('./lib/values');
-const NodeRSA = require('node-rsa');
+import NodeRSA from 'node-rsa';
+import expect from 'expect';
+import { generateValue } from './lib/values';
+import { InvalidSignatureError, SignedObservedRemoveSet, getSigner, generateId } from '../src';
 
 const privateKey = new NodeRSA({ b: 512 });
 const sign = getSigner(privateKey.exportKey('pkcs1-private-pem'));

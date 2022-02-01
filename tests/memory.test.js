@@ -1,9 +1,8 @@
 // @flow
 
-// const expect = require('expect');
-const uuid = require('uuid');
-const { ObservedRemoveMap } = require('../src');
-const { generateValue } = require('./lib/values');
+import { v4 as uuidv4 } from 'uuid';
+import { ObservedRemoveMap } from '../src';
+import { generateValue } from './lib/values';
 
 const memoryDelta = (start:Object) => {
   const end = process.memoryUsage();
@@ -21,7 +20,7 @@ describe('Map Memory Test', () => {
     const startMemoryUsage = process.memoryUsage();
     const start = Date.now();
     for (let i = 0; i < 100000; i += 1) {
-      const key = uuid.v4();
+      const key = uuidv4();
       const value = generateValue();
       map.set(key, value);
       if (i % 1000 === 1) {
