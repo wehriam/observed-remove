@@ -1,6 +1,6 @@
 {
   "name": "observed-remove",
-  "version": "2.3.00",
+  "version": "2.3.01",
   "repository": "git@github.com:wehriam/observed-remove",
   "author": "John Wehr <johnwehr@gmail.com>",
   "license": "MIT",
@@ -11,6 +11,22 @@
     ".": {
       "require": "./dist/cjs/index.js",
       "import": "./dist/esm/index.js"
+    },
+    "./map": {
+      "require": "./dist/cjs/map.js",
+      "import": "./dist/esm/map.js"
+    },
+    "./set": {
+      "require": "./dist/cjs/set.js",
+      "import": "./dist/esm/set.js"
+    },
+    "./signed-map": {
+      "require": "./dist/cjs/signed-map.js",
+      "import": "./dist/esm/signed-map.js"
+    },
+    "./signed-set": {
+      "require": "./dist/cjs/signed-set.js",
+      "import": "./dist/esm/signed-set.js"
     }
   },
   "scripts": {
